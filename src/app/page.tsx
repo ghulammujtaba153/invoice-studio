@@ -650,9 +650,9 @@ function PageContent() {
         <div className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background relative">
 
           
-          {/*<div className="absolute top-6 right-6 z-20">
-            <ThemeToggle />
-          </div> */}
+          <div className="absolute top-6 right-6 z-20">
+            {/* <ThemeToggle /> */}
+          </div> 
 
 
           <header className="mb-10 text-center pt-16">

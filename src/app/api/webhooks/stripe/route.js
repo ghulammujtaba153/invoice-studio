@@ -43,7 +43,7 @@ export async function POST(req) {
                 UserId: packageDetails.UserId,
                 name: packageDetails.name,
                 price: packageDetails.price,
-                requests: JSON.parse(packageDetails.requests), // ✅ Correctly parsing data
+                requests: JSON.parse(packageDetails.requests), // ✅ Correctly parsing requests data
             });
         }
     }
