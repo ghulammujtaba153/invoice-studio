@@ -309,13 +309,25 @@ function PageContent() {
 
     
       if (!await requestLimiter.canProcessRequest(user)) {
-        toast({
+        if(!user){
+          toast({
           title: "Request Limit Reached",
-          description: "You've used your 3 free requests. Please register to get 5 more requests.",
+          description: "You've used your 5 free requests. Please register to get 10 more requests.",
           variant: "destructive",
         });
-        setRequestError("You've used your 3 free requests. Please register to get 5 more requests.");
+        setRequestError("You've used your 5 free requests. Please register to get 10 more requests.");
         return;
+
+        } else{
+          toast({
+          title: "Request Limit Reached",
+          description: "You've used your credits Buy more!",
+          variant: "destructive",
+        });
+        setRequestError("You've used your credits Buy more!");
+        return;
+        }
+        
       }
     
       // ✅ Record the request only once
@@ -638,9 +650,9 @@ function PageContent() {
         <div className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background relative">
 
           
-          <div className="absolute top-6 right-6 z-20">
+          {/*<div className="absolute top-6 right-6 z-20">
             <ThemeToggle />
-          </div>
+          </div> */}
 
 
           <header className="mb-10 text-center pt-16">
