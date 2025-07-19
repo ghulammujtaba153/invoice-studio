@@ -72,7 +72,7 @@ const Navbar = () => {
 
         {!user && (
           <>
-            <Link href="/signup" className="text-foreground hover:text-primary transition-colors">Signup</Link>
+            {/*<Link href="/signup" className="text-foreground hover:text-primary transition-colors">Signup</Link> */}
             <Link href="/signin" className="text-foreground hover:text-primary transition-colors">Signin</Link>
           </>
         )}
