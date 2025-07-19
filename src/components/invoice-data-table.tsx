@@ -181,106 +181,106 @@ export function InvoiceDataTable({ invoices, sortConfig, onSort }: InvoiceDataTa
 
         {/* Desktop View */}
         <div className="hidden md:block">
-          <ScrollArea className="h-[450px] w-full whitespace-nowrap">
-            <Table className="min-w-full">
-              <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 shadow-sm">
-                <TableRow>
-                  <TableHead 
+        <ScrollArea className="h-[450px] w-full whitespace-nowrap">
+          <Table className="min-w-full">
+            <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 shadow-sm">
+              <TableRow>
+                <TableHead 
                     className="px-3 py-3 font-semibold whitespace-nowrap text-left cursor-pointer hover:bg-muted/70 transition-colors" 
                     style={{ width: '60px', minWidth: '60px' }}
-                    onClick={() => onSort('processingOrder')}
-                  >
-                    <ListOrdered className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
-                    <span className="inline-block align-middle">#</span>
-                    {renderSortArrow('processingOrder')}
-                  </TableHead>
-                  <TableHead 
+                  onClick={() => onSort('processingOrder')}
+                >
+                  <ListOrdered className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
+                  <span className="inline-block align-middle">#</span>
+                  {renderSortArrow('processingOrder')}
+                </TableHead>
+                <TableHead 
                     className="px-3 py-3 font-semibold whitespace-nowrap text-left cursor-pointer hover:bg-muted/70 transition-colors" 
                     style={{ minWidth: '120px' }}
-                    onClick={() => onSort('invoice_date')}
-                  >
-                    <CalendarDays className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
+                  onClick={() => onSort('invoice_date')}
+                >
+                  <CalendarDays className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
                     <span className="inline-block align-middle">Date</span>
-                    {renderSortArrow('invoice_date')}
-                  </TableHead>
-                  <TableHead 
+                  {renderSortArrow('invoice_date')}
+                </TableHead>
+                <TableHead 
                     className="px-3 py-3 font-semibold whitespace-nowrap text-left cursor-pointer hover:bg-muted/70 transition-colors" 
                     style={{ minWidth: '140px' }}
-                    onClick={() => onSort('invoice_number')}
-                  >
-                    <FileKey className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
-                    <span className="inline-block align-middle">Invoice No.</span>
-                    {renderSortArrow('invoice_number')}
-                  </TableHead>
-                  <TableHead 
+                  onClick={() => onSort('invoice_number')}
+                >
+                  <FileKey className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
+                  <span className="inline-block align-middle">Invoice No.</span>
+                  {renderSortArrow('invoice_number')}
+                </TableHead>
+                <TableHead 
                     className="px-3 py-3 font-semibold whitespace-nowrap text-left cursor-pointer hover:bg-muted/70 transition-colors" 
                     style={{ minWidth: '140px' }}
-                    onClick={() => onSort('trn_number')}
-                  >
-                    <ReceiptText className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
+                  onClick={() => onSort('trn_number')}
+                >
+                  <ReceiptText className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
                     <span className="inline-block align-middle">TRN</span>
-                    {renderSortArrow('trn_number')}
-                  </TableHead>
-                  <TableHead 
+                  {renderSortArrow('trn_number')}
+                </TableHead>
+                <TableHead 
                     className="px-3 py-3 font-semibold whitespace-nowrap text-left cursor-pointer hover:bg-muted/70 transition-colors" 
                     style={{ minWidth: '200px' }}
-                    onClick={() => onSort('vendor_name')}
-                  >
-                    <Building className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
+                  onClick={() => onSort('vendor_name')}
+                >
+                  <Building className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
                     <span className="inline-block align-middle">Vendor</span>
-                    {renderSortArrow('vendor_name')}
-                  </TableHead>
-                  <TableHead 
+                  {renderSortArrow('vendor_name')}
+                </TableHead>
+                <TableHead 
                     className="px-3 py-3 font-semibold text-right whitespace-nowrap cursor-pointer hover:bg-muted/70 transition-colors" 
                     style={{ minWidth: '120px' }}
-                    onClick={() => onSort('total_before_tax')}
-                  >
-                    <Coins className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
+                  onClick={() => onSort('total_before_tax')}
+                >
+                  <Coins className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
                     <span className="inline-block align-middle">Before Tax</span>
-                    {renderSortArrow('total_before_tax')}
-                  </TableHead>
-                  <TableHead 
+                  {renderSortArrow('total_before_tax')}
+                </TableHead>
+                <TableHead 
                     className="px-3 py-3 font-semibold text-right whitespace-nowrap cursor-pointer hover:bg-muted/70 transition-colors" 
                     style={{ minWidth: '100px' }}
-                    onClick={() => onSort('vat_amount')}
-                  >
-                    <Percent className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
+                  onClick={() => onSort('vat_amount')}
+                >
+                  <Percent className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
                     <span className="inline-block align-middle">VAT</span>
-                    {renderSortArrow('vat_amount')}
-                  </TableHead>
-                  <TableHead 
+                  {renderSortArrow('vat_amount')}
+                </TableHead>
+                <TableHead 
                     className="px-3 py-3 font-semibold text-right whitespace-nowrap cursor-pointer hover:bg-muted/70 transition-colors" 
                     style={{ minWidth: '120px' }}
-                    onClick={() => onSort('total_amount')}
-                  >
-                    <DollarSign className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
+                  onClick={() => onSort('total_amount')}
+                >
+                  <DollarSign className="h-4 w-4 mr-1.5 text-muted-foreground inline-block align-middle"/>
                     <span className="inline-block align-middle">Total</span>
-                    {renderSortArrow('total_amount')}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {completedInvoices.map((invoice, index) => {
-                  const dateValue = invoice.extractedData?.invoice_date;
-                  let displayDate = 'N/A';
-                  if (dateValue) {
-                    const parsed = parseDate(dateValue);
-                    if (parsed) {
-                      try {
-                        displayDate = format(parsed, 'dd-MMM-yyyy');
-                      } catch (e) {
-                        console.warn(`Could not format date: ${dateValue}`, e);
-                        displayDate = dateValue; 
-                      }
-                    } else {
+                  {renderSortArrow('total_amount')}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {completedInvoices.map((invoice, index) => {
+                const dateValue = invoice.extractedData?.invoice_date;
+                let displayDate = 'N/A';
+                if (dateValue) {
+                  const parsed = parseDate(dateValue);
+                  if (parsed) {
+                    try {
+                      displayDate = format(parsed, 'dd-MMM-yyyy');
+                    } catch (e) {
+                      console.warn(`Could not format date: ${dateValue}`, e);
                       displayDate = dateValue; 
                     }
+                  } else {
+                    displayDate = dateValue; 
                   }
+                }
 
                   const isDbInvoice = invoice.id.startsWith('db_');
-                  
-                  return (
-                    <TableRow key={invoice.id} className="hover:bg-muted/50 transition-colors duration-150 ease-in-out">
+                
+                return (
+                  <TableRow key={invoice.id} className="hover:bg-muted/50 transition-colors duration-150 ease-in-out">
                       <TableCell className="px-3 py-3 whitespace-nowrap text-left">
                         <div className="flex items-center gap-1">
                           <span>{index + 1}</span>
@@ -302,7 +302,7 @@ export function InvoiceDataTable({ invoices, sortConfig, onSort }: InvoiceDataTa
                       <TableCell className="px-3 py-3 whitespace-nowrap text-left text-sm">{invoice.extractedData?.invoice_number || 'N/A'}</TableCell>
                       <TableCell className="px-3 py-3 whitespace-nowrap text-left text-sm">{invoice.extractedData?.trn_number || 'N/A'}</TableCell>
                       <TableCell className="px-3 py-3 whitespace-nowrap text-left text-sm">
-                        <TooltipProvider>
+                      <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                                <span className="block truncate max-w-[180px]" title={invoice.extractedData?.vendor_name || undefined}>{invoice.extractedData?.vendor_name || 'N/A'}</span>
@@ -312,17 +312,17 @@ export function InvoiceDataTable({ invoices, sortConfig, onSort }: InvoiceDataTa
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                      </TableCell>
+                    </TableCell>
                       <TableCell className="px-3 py-3 text-right whitespace-nowrap text-sm">{invoice.extractedData?.total_before_tax || 'N/A'}</TableCell>
                       <TableCell className="px-3 py-3 text-right whitespace-nowrap text-sm">{invoice.extractedData?.vat_amount || 'N/A'}</TableCell>
                       <TableCell className="px-3 py-3 text-right whitespace-nowrap text-sm font-medium">{invoice.extractedData?.total_amount || 'N/A'}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
         </div>
       </CardContent>
     </Card>

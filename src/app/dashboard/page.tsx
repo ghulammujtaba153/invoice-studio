@@ -205,8 +205,8 @@ function PageContent() {
       
       if (user?.userId || user?._id) {
         userId = user.userId || user._id;
-      } else if (session?.user?.id || session?.user?._id) {
-        userId = session.user.id || session.user._id;
+      } else if (session?.user && ((session.user as any)?.id || (session.user as any)?._id)) {
+        userId = (session.user as any).id || (session.user as any)._id;
       }
       
       console.log("Dashboard - Loading invoices for userId:", userId);
@@ -293,7 +293,7 @@ function PageContent() {
   const handleProcessInvoices = useCallback(async () => {
 
 
-    console.log("handleProcessInvoices start", user, session.user);
+    console.log("handleProcessInvoices start", user, session);
 
 
     const invoicesToProcess = invoices.filter(inv => inv.status === 'pending');
@@ -319,8 +319,8 @@ function PageContent() {
       let userId = null;
       if (user?.userId || user?._id) {
         userId = user.userId || user._id;
-      } else if (session?.user?.id || session?.user?._id) {
-        userId = session.user.id || session.user._id;
+      } else if (session?.user && ((session.user as any)?.id || (session.user as any)?._id)) {
+        userId = (session.user as any).id || (session.user as any)._id;
       }
       
       if (!await requestLimiter.canProcessRequest(userId ? { userId, _id: userId } : null)) {
@@ -387,6 +387,9 @@ function PageContent() {
 
         console.log("extractedResults", extractedResults);
         console.log("extractedResults.length", extractedResults.length);
+
+
+        
         
 
 
@@ -398,32 +401,30 @@ function PageContent() {
             console.log("singleInvoiceData", singleInvoiceData);
             console.log("singleInvoiceData.invoice_number", existingSignatures.has(signature));
 
-            
+
+            if(user){
+              const userId = user.userId || user._id;
+              try {
+                console.log("Dashboard - Saving invoice for userId:", userId);
+                await sendInvoiceToAPI(singleInvoiceData, userId);
+                successfulApiCalls++;
+              } catch (error) {
+                console.error('Failed to save invoice to database:', error);
+                // Continue processing even if API call fails
+              }
+    
+            }
+
+            if (!existingSignatures.has(signature)) {
               existingSignatures.add(signature);
 
 
               console.log("Dashboard - User context: before invoice record", user, session.user);
               
-              // Send to API if user is present
-              let userId = null;
-              if (user?.userId || user?._id) {
-                userId = user.userId || user._id;
-              } else if (session?.user?.id || session?.user?._id) {
-                userId = session.user.id || session.user._id;
-              }
-
-
-              console.log("Dashboard - User context: after invoice record", user, session.user);
               
               
-                try {
-                  console.log("Dashboard - Saving invoice for userId:", userId);
-                  await sendInvoiceToAPI(singleInvoiceData, userId);
-                  successfulApiCalls++;
-                } catch (error) {
-                  console.error('Failed to save invoice to database:', error);
-                  // Continue processing even if API call fails
-                }
+              
+                
              
               
               newUniqueEntriesForThisFile.push({
@@ -437,6 +438,9 @@ function PageContent() {
                 processingOrderIndex: globalProcessingOrderIndex++, // Assign and increment
               });
               newlyExtractedCountThisBatch++;
+            } else {
+              duplicatesFoundInFile++;
+            }
             
           }
 

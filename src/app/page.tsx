@@ -147,7 +147,7 @@ const fetchUserInvoices = async (userId: string): Promise<ProcessedInvoice[]> =>
 
     const invoices = await response.json();
     console.log('Fetched user invoices:', invoices);
-    
+
     // Convert database invoices to ProcessedInvoice format
     return invoices.map((invoice: any, index: number) => ({
       id: `db_${invoice._id}`,
@@ -276,7 +276,7 @@ function PageContent() {
   const handleProcessInvoices = useCallback(async () => {
 
 
-    
+
 
     // Add request limit check at the start
     // if (!user && !requestLimiter.canProcessRequest(false)) {
@@ -307,10 +307,10 @@ function PageContent() {
       return;
     }
 
-    
-      if (!await requestLimiter.canProcessRequest(user)) {
-        if(!user){
-          toast({
+
+    if (!await requestLimiter.canProcessRequest(user)) {
+      if (!user) {
+        toast({
           title: "Request Limit Reached",
           description: "You've used your 5 free requests. Please register to get 10 more requests.",
           variant: "destructive",
@@ -318,23 +318,23 @@ function PageContent() {
         setRequestError("You've used your 5 free requests. Please register to get 10 more requests.");
         return;
 
-        } else{
-          toast({
+      } else {
+        toast({
           title: "Request Limit Reached",
           description: "You've used your credits Buy more!",
           variant: "destructive",
         });
         setRequestError("You've used your credits Buy more!");
         return;
-        }
-        
       }
-    
-      // ✅ Record the request only once
-      requestLimiter.recordRequest(user);
-    
 
-    
+    }
+
+    // ✅ Record the request only once
+    requestLimiter.recordRequest(user);
+
+
+
 
     setIsProcessing(true);
     setProcessingProgress(0);
@@ -398,12 +398,12 @@ function PageContent() {
                 // Continue processing even if API call fails
               }
             }
-            
+
             if (!existingSignatures.has(signature)) {
               existingSignatures.add(signature);
-              
-              
-              
+
+
+
               newUniqueEntriesForThisFile.push({
                 id: `${processedOriginalFileEntry.id}_inv${index + 1}`,
                 file: processedOriginalFileEntry.file,
@@ -499,7 +499,7 @@ function PageContent() {
       const totalInvoicesInTable = tempInvoicesAccumulator.filter(
         inv => inv.status === 'completed' && inv.extractedData
       ).length;
-      
+
       toast({
         title: "Processing Complete",
         description: `Processed ${totalFilesToProcess} file(s). ${newlyExtractedCountThisBatch} new unique invoice(s) extracted. ${successfulApiCalls > 0 ? `${successfulApiCalls} saved to database.` : ''} Total in table: ${totalInvoicesInTable}.`,
@@ -592,10 +592,10 @@ function PageContent() {
       // Database invoices come first
       const aIsDb = a.id.startsWith('db_');
       const bIsDb = b.id.startsWith('db_');
-      
+
       if (aIsDb && !bIsDb) return -1;
       if (!aIsDb && bIsDb) return 1;
-      
+
       // Then sort by processingOrderIndex
       if (a.processingOrderIndex === undefined || b.processingOrderIndex === undefined) return 0;
       return (a.processingOrderIndex ?? 0) - (b.processingOrderIndex ?? 0);
@@ -638,7 +638,7 @@ function PageContent() {
   return (
     <>
 
-      
+
 
       <ActivitySidebarContent
         activityLog={activityLog}
@@ -649,10 +649,10 @@ function PageContent() {
       <SidebarInset>
         <div className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background relative">
 
-          
+
           <div className="absolute top-6 right-6 z-20">
             {/* <ThemeToggle /> */}
-          </div> 
+          </div>
 
 
           <header className="mb-10 text-center pt-16">

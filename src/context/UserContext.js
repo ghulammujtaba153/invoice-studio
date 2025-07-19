@@ -42,15 +42,15 @@ export const UserProvider = ({ children }) => {
             setUser(userData);
         } else {
             // Check for existing JWT token (for regular login)
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const decodedUser = jwtDecode(token);
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const decodedUser = jwtDecode(token);
                     console.log("JWT token - decoded user:", decodedUser);
-                    setUser(decodedUser);
-                } catch (error) {
-                    console.error('Invalid token:', error);
-                    logout();
+                setUser(decodedUser);
+            } catch (error) {
+                console.error('Invalid token:', error);
+                logout();
                 }
             } else {
                 console.log("No session or token found - setting user to null");
@@ -72,10 +72,10 @@ export const UserProvider = ({ children }) => {
     const setSession = (session) => {
         if (session?.customToken) {
             try {
-                const decodedUser = jwtDecode(session.customToken);
-                localStorage.setItem('token', session.customToken);
+            const decodedUser = jwtDecode(session.customToken);
+            localStorage.setItem('token', session.customToken);
                 console.log("Manual session set - decoded user:", decodedUser);
-                setUser(decodedUser);
+            setUser(decodedUser);
             } catch (error) {
                 console.error('Invalid session token:', error);
             }
