@@ -190,8 +190,8 @@ const SignUp = () => {
 
           {/* Divider */}
           <div className="flex items-center w-full gap-2">
-            <div className="flex-1 h-[1px] bg-border"></div>
-            <p className="text-muted-foreground text-sm whitespace-nowrap">Or continue with</p>
+            <div className="flex-1 h-[1px] bg-border"></div> 
+            <p className="text-muted-foreground text-sm whitespace-nowrap">Or continue with new</p>
             <div className="flex-1 h-[1px] bg-border"></div>
           </div>
 

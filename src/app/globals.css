@@ -116,6 +116,14 @@
 
   /* Improve focus visibility for accessibility */
   *:focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+    @apply outline-none ;
+  }
+}
+
+@layer base {
+  input,
+  input:focus,
+  input:focus-visible {
+    @apply border-none outline-none ring-0 ring-offset-0 shadow-none;
   }
 }
