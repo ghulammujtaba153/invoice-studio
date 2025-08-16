@@ -3,20 +3,30 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true, // Name is required for all users
+        required: true, 
     },
     email: {
         type: String,
-        required: true, // Email is required for all users
-        unique: true, // Ensure email is unique
+        required: true, 
+        unique: true, 
     },
     password: {
         type: String,
         required: function () {
-            // Password is required only for email/password users
             return this.provider === "email";
         },
     },
+    role:{
+        type: String,
+        enum: ["admin", "viewer", "user"],
+        default: "user",
+    },
+    status:{
+        type: String,
+        enum: ["active", "suspended", "invited"],
+        default: "active",
+    },
+
     image: {
         type: String,
         default: "", // Image is optional (Google/Apple provides it, email/password may not)
@@ -39,8 +49,8 @@ const userSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        default: Date.now,
-    },
+        default: Date.now
+    }
 });
 
 // Check if the model already exists
