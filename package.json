@@ -52,6 +52,7 @@
     "firebase": "^11.3.0",
     "framer-motion": "^12.23.6",
     "genkit": "^1.6.2",
+    "jose": "^6.0.12",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.475.0",

@@ -65,9 +65,13 @@ const SignIn = () => {
         login(token);
         setFormData({ email: "", password: "" });
         localStorage.setItem("type", "user");
-        setError("");
+
+       
+
+        setSuccess("Login successful!");
+        setFormData({ email: "", password: "" });
       } else {
-        setError(res.data.message);
+        setError(res.data.message || "Login failed");
       }
     } catch (error) {
       console.error("Error logging in:", error);

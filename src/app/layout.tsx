@@ -44,7 +44,7 @@ export default function RootLayout({
             
             <UserProvider>   {/* ✅ Then wrap your custom UserProvider */}
               <PackageProvider>
-              {/* <Navbar/> */}
+              <Navbar/>
               {children}
               </PackageProvider>
             </UserProvider>

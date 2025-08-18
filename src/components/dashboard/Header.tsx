@@ -13,6 +13,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, LayoutDashboard } from "lucide-react";
+import { ADMIN_EMAILS } from "@/lib/constants";
 
 const Header = () => {
   const { user, logout } = useUser();
@@ -50,13 +51,17 @@ const Header = () => {
         <h1 className="text-2xl font-bold text-foreground">
           Hello {user?.name || "Guest"}
         </h1>
-        <p className="text-sm text-muted-foreground">Welcome to your dashboard</p>
+        <p className="text-sm text-muted-foreground">
+          Welcome to your dashboard
+        </p>
       </div>
 
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <p className="text-foreground">Credits: </p>
-          <p className="text-foreground">{loading ? "..." : credits ?? "N/A"}</p>
+          <p className="text-foreground">
+            {loading ? "..." : credits ?? "N/A"}
+          </p>
         </div>
 
         <ThemeToggle />
@@ -79,7 +84,9 @@ const Header = () => {
             {/* User info (label OK here) */}
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
+                <p className="text-sm font-medium leading-none">
+                  {user?.name || "User"}
+                </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email || "user@example.com"}
                 </p>
@@ -89,12 +96,17 @@ const Header = () => {
             <DropdownMenuSeparator />
 
             {/* Admin Dashboard as an actionable item with hover bg */}
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/admin-dashboard" className="flex items-center">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                <span>Admin Dashboard</span>
-              </Link>
-            </DropdownMenuItem>
+            {user?.email && ADMIN_EMAILS.includes(user.email) && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href="/admin-dashboard" className="flex items-center">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Admin Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
 
             <DropdownMenuSeparator />
 
