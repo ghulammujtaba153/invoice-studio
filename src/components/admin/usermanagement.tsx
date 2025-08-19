@@ -262,7 +262,7 @@ export default function UserManagement() {
       try {
         setLoading(true);
         setErr(null);
-        const res = await fetch(`http://localhost:9002/api/auth/users-all?page=${page}&limit=${limit}`, { cache: "no-store" });
+        const res = await fetch(`/api/auth/users-all?page=${page}&limit=${limit}`, { cache: "no-store" });
         if (!res.ok) throw new Error(`Failed to load users (${res.status})`);
         const json = await res.json();
         if (!json?.success) throw new Error("API returned success=false");

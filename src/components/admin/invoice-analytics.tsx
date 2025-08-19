@@ -203,10 +203,10 @@ export default function InvoiceAnalytics(_: Props) {
         setError(null);
 
         const [o, i, p, u] = await Promise.all([
-          fetch("http://localhost:9002/api/stats/overview", { cache: "no-store" }),
-          fetch("http://localhost:9002/api/stats/invoices", { cache: "no-store" }),
-          fetch("http://localhost:9002/api/stats/packages", { cache: "no-store" }),
-          fetch("http://localhost:9002/api/stats/users?period=7", { cache: "no-store" }),
+          fetch("/api/stats/overview", { cache: "no-store" }),
+          fetch("/api/stats/invoices", { cache: "no-store" }),
+          fetch("/api/stats/packages", { cache: "no-store" }),
+          fetch("/api/stats/users?period=7", { cache: "no-store" }),
         ]);
 
         if (!o.ok) throw new Error(`overview ${o.status}`);

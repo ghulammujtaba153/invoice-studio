@@ -37,7 +37,7 @@ export default function CreateUserDialog({ onSuccess }: Props) {
     setErr(null);
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:9002/api/auth/invite", {
+      const res = await fetch("/api/auth/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
