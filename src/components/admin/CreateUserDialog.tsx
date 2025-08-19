@@ -44,17 +44,15 @@ export default function CreateUserDialog({ onSuccess }: Props) {
         body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
-          role: form.role, // "admin" | "user"
+          role: form.role, 
         }),
       });
 
-      // API usually returns { success: true/false, ... }
       const json = await res.json().catch(() => ({}));
       if (!res.ok || json?.success === false) {
         throw new Error(json?.message || `Invite failed (${res.status})`);
       }
 
-      // Success -> parent ko batado + form reset
       onSuccess?.();
       setOpen(false);
       setForm({ name: "", email: "", role: "user" });

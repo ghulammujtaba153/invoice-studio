@@ -15,11 +15,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import CreatePlanDialog from "@/components/admin/CreatePlanDialog";
+import { Pencil } from "lucide-react";
 
 const SubscriptionPlans = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [editPlan, setEditPlan] = useState(null);
+
   const [form, setForm] = useState({
     title: "",
     subtitle: "",
@@ -57,12 +61,26 @@ const SubscriptionPlans = () => {
     };
 
     try {
-      const res = await axios.post("http://localhost:9002/api/plans/create", payload);
+      const res = await axios.post(
+        "http://localhost:9002/api/plans/create",
+        payload
+      );
       if (res.data?.success) {
         toast.success("Plan created successfully");
-        fetchPlans();
-        setOpen(false);
-        setForm({ title: "", subtitle: "", features: "", price: "", stripePriceId: "", requests: "" });
+
+        // Clear form
+        setForm({
+          title: "",
+          subtitle: "",
+          features: "",
+          price: "",
+          stripePriceId: "",
+          requests: "",
+        });
+
+        // Wait for data update, then close modal
+        await fetchPlans();
+        setOpen(false); // Only close after plans updated
       } else {
         toast.error(res.data?.message || "Creation failed");
       }
@@ -80,27 +98,13 @@ const SubscriptionPlans = () => {
     <div className="w-full">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Subscription Plans</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>Create Plan</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Create a Plan</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-4 py-4">
-              <Input placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="border" />
-              <Input placeholder="Subtitle" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} className="border" />
-              <Textarea placeholder="Features (comma-separated)" value={form.features} onChange={(e) => setForm({ ...form, features: e.target.value })} className="border" />
-              <Input type="number" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="border" />
-              <Input placeholder="Stripe Price ID" value={form.stripePriceId} onChange={(e) => setForm({ ...form, stripePriceId: e.target.value })} className="border" />
-              <Input type="number" placeholder="Request Limit" value={form.requests} onChange={(e) => setForm({ ...form, requests: e.target.value })} className="border" />
-            </div>
-            <DialogFooter>
-              <Button onClick={handleCreatePlan}>Submit</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CreatePlanDialog
+          onSuccess={() => {
+            fetchPlans();
+            setEditPlan(null);
+          }}
+          editData={editPlan}
+        />
       </div>
 
       {loading ? (
@@ -115,13 +119,23 @@ const SubscriptionPlans = () => {
               className="border border-border bg-white dark:bg-card rounded-xl p-6 shadow-md hover:shadow-xl transition duration-300"
             >
               <div className="mb-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto text-blue-500 hover:underline"
+                  onClick={() => setEditPlan(plan)}
+                >
+                  <Pencil className="w-4 h-4" /> Edit
+                </Button>
                 <h3 className="text-xl font-bold text-primary">{plan.title}</h3>
                 <p className="text-sm text-muted-foreground">{plan.subtitle}</p>
               </div>
               <div className="text-3xl font-bold mb-2 text-foreground">
                 {plan.price === 0 ? "Free" : `$${plan.price}`}
               </div>
-              <p className="text-muted-foreground text-sm mb-2">One-Time Payment</p>
+              <p className="text-muted-foreground text-sm mb-2">
+                One-Time Payment
+              </p>
               <hr className="mb-4" />
               <ul className="text-muted-foreground text-sm space-y-2">
                 {plan.features.map((feature, i) => (
