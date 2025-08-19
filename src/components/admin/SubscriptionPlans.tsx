@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import {
   Dialog,
@@ -19,7 +19,6 @@ import { Textarea } from "@/components/ui/textarea";
 const SubscriptionPlans = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -34,7 +33,11 @@ const SubscriptionPlans = () => {
     setLoading(true);
     try {
       const res = await axios.get("http://localhost:9002/api/plans/get");
-      setPlans(res.data?.plans || []);
+      if (Array.isArray(res.data)) {
+        setPlans(res.data);
+      } else {
+        toast.error("Unexpected data format");
+      }
     } catch (err) {
       toast.error("Failed to fetch plans");
       console.error(err);
@@ -61,10 +64,10 @@ const SubscriptionPlans = () => {
         setOpen(false);
         setForm({ title: "", subtitle: "", features: "", price: "", stripePriceId: "", requests: "" });
       } else {
-        toast.error(res.data?.message || "Failed to create plan");
+        toast.error(res.data?.message || "Creation failed");
       }
     } catch (error) {
-      toast.error("API error during creation");
+      toast.error("API error");
       console.error(error);
     }
   };
@@ -75,58 +78,24 @@ const SubscriptionPlans = () => {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Subscription Plans</h2>
-
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">Subscription Plans</h2>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>Create New Plan</Button>
+            <Button>Create Plan</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Create a Plan</DialogTitle>
             </DialogHeader>
-
             <div className="flex flex-col gap-4 py-4">
-              <Input
-              className="w-full bg-transparent text-foreground placeholder-muted-foreground outline-none"
-                placeholder="Title"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-              />
-              <Input
-              className="w-full bg-transparent text-foreground placeholder-muted-foreground outline-none"
-                placeholder="Subtitle"
-                value={form.subtitle}
-                onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-              />
-              <Textarea
-                placeholder="Comma-separated features (e.g. 100 requests,Email support)"
-                value={form.features}
-                onChange={(e) => setForm({ ...form, features: e.target.value })}
-              />
-              <Input
-              className="w-full bg-transparent text-foreground placeholder-muted-foreground outline-none"
-                type="number"
-                placeholder="Price"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-              />
-              <Input
-              className="w-full bg-transparent text-foreground placeholder-muted-foreground outline-none"
-                placeholder="Stripe Price ID"
-                value={form.stripePriceId}
-                onChange={(e) => setForm({ ...form, stripePriceId: e.target.value })}
-              />
-              <Input
-              className="w-full bg-transparent text-foreground placeholder-muted-foreground outline-none"
-                type="number"
-                placeholder="Request Limit"
-                value={form.requests}
-                onChange={(e) => setForm({ ...form, requests: e.target.value })}
-              />
+              <Input placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="border" />
+              <Input placeholder="Subtitle" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} className="border" />
+              <Textarea placeholder="Features (comma-separated)" value={form.features} onChange={(e) => setForm({ ...form, features: e.target.value })} className="border" />
+              <Input type="number" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="border" />
+              <Input placeholder="Stripe Price ID" value={form.stripePriceId} onChange={(e) => setForm({ ...form, stripePriceId: e.target.value })} className="border" />
+              <Input type="number" placeholder="Request Limit" value={form.requests} onChange={(e) => setForm({ ...form, requests: e.target.value })} className="border" />
             </div>
-
             <DialogFooter>
               <Button onClick={handleCreatePlan}>Submit</Button>
             </DialogFooter>
@@ -136,41 +105,28 @@ const SubscriptionPlans = () => {
 
       {loading ? (
         <p>Loading...</p>
+      ) : plans.length === 0 ? (
+        <p>No plans found.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plans.map((card, index) => (
+          {plans.map((plan, index) => (
             <div
-              key={card.id || index}
-              onClick={() => setActiveIndex(index)}
-              className={`flex flex-col gap-4 border ${
-                activeIndex === index
-                  ? "border-primary shadow-lg shadow-primary/20"
-                  : "border-border"
-              } bg-card backdrop-blur-[70px] rounded-[20px] p-4 transition-all duration-300 cursor-pointer hover:scale-[1.02]`}
+              key={plan._id}
+              className="border border-border bg-white dark:bg-card rounded-xl p-6 shadow-md hover:shadow-xl transition duration-300"
             >
-              <div className="flex flex-col gap-2">
-                <h1 className={`text-2xl font-bold ${activeIndex === index ? "text-primary" : "text-foreground"}`}>{card.title}</h1>
-                <p className="text-muted-foreground text-sm">{card.subtitle}</p>
+              <div className="mb-4">
+                <h3 className="text-xl font-bold text-primary">{plan.title}</h3>
+                <p className="text-sm text-muted-foreground">{plan.subtitle}</p>
               </div>
-
-              <div className="flex items-center gap-2">
-                <p className="text-foreground text-4xl font-bold">
-                  {card.price === 0 ? "Free" : `$${card.price}`}
-                </p>
-                <p className="text-muted-foreground text-sm"> One-Time Payment</p>
+              <div className="text-3xl font-bold mb-2 text-foreground">
+                {plan.price === 0 ? "Free" : `$${plan.price}`}
               </div>
-
-              <div className="flex flex-col py-2 gap-2">
-                <p className="text-foreground text-sm">Features</p>
-                <div className="w-full h-[1px] bg-border"></div>
-              </div>
-
-              <ul className="list-disc list-inside text-muted-foreground text-lg">
-                {card.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <CheckCircleIcon
-                      className={`w-4 h-4 ${activeIndex === index ? "text-primary" : "text-muted-foreground"}`}
-                    />
+              <p className="text-muted-foreground text-sm mb-2">One-Time Payment</p>
+              <hr className="mb-4" />
+              <ul className="text-muted-foreground text-sm space-y-2">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500" />
                     {feature}
                   </li>
                 ))}
