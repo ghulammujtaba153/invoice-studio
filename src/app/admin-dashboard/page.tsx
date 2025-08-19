@@ -6,6 +6,7 @@ import Sidebar from "@/components/admin/Sidebar";
 import Header from "@/components/admin/Header";
 import InvoiceAnalytics from "@/components/admin/invoice-analytics";
 import UserManagement from "@/components/admin/usermanagement";
+import SubscriptionPlans from "@/components/admin/SubscriptionPlans";
 
 export default function AdminDashboardPage() {
   const searchParams = useSearchParams();
@@ -22,21 +23,25 @@ export default function AdminDashboardPage() {
           {/* <Header /> */}
 
           {view === "home" ? (
-            // Graphs & Charts
             <section className="mt-4">
-              {/* Pass empty array; InvoiceAnalytics will auto-fallback to demo data */}
               <InvoiceAnalytics invoices={[]} />
             </section>
-          ) : (
-            // User Management (table + modals)
+          ) : view === "users" ? (
             <section className="mt-4">
               <UserManagement />
+            </section>
+          ) : (
+            <section className="mt-4">
+              <SubscriptionPlans />
             </section>
           )}
         </div>
 
         <footer className="text-center py-10 text-muted-foreground text-base mt-auto">
-          <p>&copy; {new Date().getFullYear()} Invoice Insights. AI-Powered Data Extraction.</p>
+          <p>
+            &copy; {new Date().getFullYear()} Invoice Insights. AI-Powered Data
+            Extraction.
+          </p>
         </footer>
       </div>
     </div>

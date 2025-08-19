@@ -3,6 +3,7 @@ import User from "@/lib/models/User";
 import connectDB from "@/lib/mongodb";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { ADMIN_EMAILS } from "@/lib/constants";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -23,7 +24,12 @@ export async function POST(request) {
 
     // ✅ Sign JWT
     const token = jwt.sign(
-      { userId: user._id, email: user.email, name: user.name },
+      {
+        userId: user._id,
+        email: user.email,
+        name: user.name,
+        role: ADMIN_EMAILS.includes(user.email) ? "admin" : "user" // ✅ inject role
+      },
       JWT_SECRET,
       { expiresIn: "1h" }
     );

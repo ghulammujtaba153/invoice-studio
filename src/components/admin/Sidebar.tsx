@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -8,6 +9,7 @@ import {
   ArrowLeftOnRectangleIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 import { useUser } from "@/context/UserContext";
 import { toast } from "react-toastify";
@@ -15,6 +17,7 @@ import { toast } from "react-toastify";
 const menuItems = [
   { name: "Home", icon: HomeIcon, href: "/admin-dashboard?view=home" },
   { name: "User Management", icon: ClipboardDocumentListIcon, href: "/admin-dashboard?view=users" },
+  { name: "Subscription", icon: CurrencyDollarIcon, href: "/admin-dashboard?view=subscription" }, // ✅ NEW
 ];
 
 const Sidebar = () => {
@@ -68,7 +71,8 @@ const Sidebar = () => {
             const isActive =
               pathname === "/admin-dashboard" &&
               ((item.name === "Home" && currentView === "home") ||
-                (item.name === "User Management" && currentView === "users"));
+                (item.name === "User Management" && currentView === "users") ||
+                (item.name === "Subscription" && currentView === "subscription")); // ✅
 
             return (
               <Link

@@ -13,7 +13,7 @@ export async function middleware(req) {
 
   try {
     const { payload } = await jwtVerify(token, SECRET);
-    if (payload?.email !== ADMIN_EMAIL) {
+    if (payload?.role !== "admin") {
       return NextResponse.redirect(new URL("/not-authorized", req.url));
     }
     return NextResponse.next();
