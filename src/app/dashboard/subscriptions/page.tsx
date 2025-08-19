@@ -9,7 +9,7 @@ const pricingCards = [
         id: "1",
         title: "Free",
         description: "For the casual user",
-        price: "0",
+        price: 0,
         requests: 10,
         features: [
             { id: 1, feature: "10 invoices" },
@@ -21,7 +21,7 @@ const pricingCards = [
         id: "price_1Rm6hDPFeWozK4w0GQ9lFs63",
         title: "Basic",
         description: "For the power user",
-        price: "19.99",
+        price: 19.99,
         requests: 30,
         features: [
             { id: 1, feature: "30 invoices" },
@@ -33,7 +33,7 @@ const pricingCards = [
         id: "price_1R6Rx0PFeWozK4w0ZjkrXlw3",
         title: "Premium",
         description: "For the power user",
-        price: "39.99",
+        price: 39.99,
         requests: 100,
         features: [
             { id: 1, feature: "100 invoices" },
@@ -46,7 +46,7 @@ const pricingCards = [
         id: "price_1R77iEPFeWozK4w0AOJ6HKE3",
         title: "Enterprise",
         description: "For the power user",
-        price: "139.99",
+        price: 139.99,
         requests: 400,
         features: [
             { id: 1, feature: "400 invoices" },

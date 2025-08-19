@@ -20,8 +20,11 @@ const Navbar = () => {
   const { user, logout } = useUser();
   const pathname = usePathname();
 
+
+  
+
   // Hide navbar on dashboard routes
-  if (pathname.startsWith("/dashboard")) {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin-dashboard") ) {
     return null;
   }
 
