@@ -74,7 +74,7 @@ const Sidebar = () => {
               pathname === "/admin-dashboard" &&
               ((item.name === "Home" && currentView === "home") ||
                 (item.name === "User Management" && currentView === "users") ||
-                (item.name === "Subscription" && currentView === "subscription")); // ✅
+                (item.name === "Subscription plans" && currentView === "subscription")); // ✅
 
             return (
               <Link
