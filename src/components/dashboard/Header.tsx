@@ -13,7 +13,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, LayoutDashboard } from "lucide-react";
-import { ADMIN_EMAILS } from "@/lib/constants";
+// import { ADMIN_EMAILS } from "@/lib/constants";
 
 const Header = () => {
   const { user, logout } = useUser();
@@ -95,18 +95,7 @@ const Header = () => {
 
             <DropdownMenuSeparator />
 
-            {/* Admin Dashboard as an actionable item with hover bg */}
-            {user?.email && ADMIN_EMAILS.includes(user.email) && (
-              <>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin-dashboard" className="flex items-center">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Admin Dashboard</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
+            
 
             <DropdownMenuSeparator />
 

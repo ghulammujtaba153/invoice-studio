@@ -33,7 +33,7 @@ const LayoutContent = ({ children }: { children: React.ReactNode }) => {
         }`}
       >
         <div className="p-6">
-          <Header />
+          {/* <Header /> */}
           {children}
         </div>
       </main>

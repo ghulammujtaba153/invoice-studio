@@ -19,7 +19,7 @@ import { toast } from "react-toastify";
 const menuItems = [
   { name: "Home", icon: HomeIcon, href: "/admin-dashboard?view=home" },
   { name: "User Management", icon: ClipboardDocumentListIcon, href: "/admin-dashboard?view=users" },
-  { name: "Subscription", icon: CurrencyDollarIcon, href: "/admin-dashboard?view=subscription" }, // ✅ NEW
+  { name: "Subscription plans", icon: CurrencyDollarIcon, href: "/admin-dashboard?view=subscription" }, // ✅ NEW
 ];
 
 const Sidebar = () => {

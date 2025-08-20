@@ -353,7 +353,7 @@ export default function InvoiceAnalytics(_: Props) {
       {/* Header + range control */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-semibold tracking-tight">Analytics Dashboard</h2>
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           {[3, 6, 12, 24].map((m) => (
             <Button
               key={m}
@@ -364,7 +364,7 @@ export default function InvoiceAnalytics(_: Props) {
               {m}M
             </Button>
           ))}
-        </div>
+        </div> */}
       </div>
 
       {/* KPI Cards */}
