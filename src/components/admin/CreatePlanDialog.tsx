@@ -74,12 +74,12 @@ export default function CreatePlanDialog({ onSuccess, editData }: Props) {
 
       let res;
       if (editData?._id) {
-        res = await axios.put(`http://localhost:9002/api/plans/${editData._id}`, payload);
+        res = await axios.patch(`/api/plans/${editData._id}`, payload);
       } else {
-        res = await axios.post("http://localhost:9002/api/plans/create", payload);
+        res = await axios.post("/api/plans/create", payload);
       }
 
-      if (res.data?.success) {
+      if (res.data) {
         toast.success(editData ? "Plan updated successfully" : "Plan created successfully");
         setForm({
           title: "",
@@ -92,7 +92,7 @@ export default function CreatePlanDialog({ onSuccess, editData }: Props) {
         setTimeout(() => setOpen(false), 0);
         onSuccess?.();
       } else {
-        toast.error(res.data?.message || "Operation failed");
+        toast.error("Operation failed");
       }
     } catch (err) {
       toast.error("API Error");
@@ -116,15 +116,39 @@ export default function CreatePlanDialog({ onSuccess, editData }: Props) {
           <DialogTitle>{editData ? "Edit Plan" : "Create a New Plan"}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-4">
+        
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Title</label>
           <Input placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Subtitle</label>
           <Input placeholder="Subtitle" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Features</label>
           <Textarea placeholder="Features (comma-separated)" value={form.features} onChange={(e) => setForm({ ...form, features: e.target.value })} />
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Price</label>
           <Input type="number" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Stripe Price ID</label>
           <Input placeholder="Stripe Price ID" value={form.stripePriceId} onChange={(e) => setForm({ ...form, stripePriceId: e.target.value })} />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Request Limit</label>
           <Input type="number" placeholder="Request Limit" value={form.requests} onChange={(e) => setForm({ ...form, requests: e.target.value })} />
+          </div>
+          
           {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-        </div>
+        
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>

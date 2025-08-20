@@ -7,10 +7,6 @@ import { usePackage } from "@/context/PackageContext";
 import { useUser } from "@/context/UserContext";
 import axios from "axios";
 
-interface Feature {
-  id: string;
-  feature: string;
-}
 
 interface Card {
   id: string;
@@ -18,7 +14,8 @@ interface Card {
   description: string;
   price: number;
   requests: number;
-  features: Feature[];
+  stripePriceId: String,
+  features: [];
 }
 
 interface PricingCardProps {
@@ -61,7 +58,7 @@ const PricingCard: React.FC<PricingCardProps> = ({ card, active, onClick, curren
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            priceId: card.id,
+            priceId: card.stripePriceId,
             packageDetails: {
               UserId: user?.userId || user?._id || "",
               name: card.title,
@@ -106,9 +103,9 @@ const PricingCard: React.FC<PricingCardProps> = ({ card, active, onClick, curren
             </div>
             <ul className="list-disc list-inside text-muted-foreground text-lg">
                 {card.features.map((feature) => (
-                    <li key={feature.id} className="flex items-center gap-2">
+                    <li className="flex items-center gap-2">
                         <CheckCircleIcon className={`w-4 h-4 ${active ? "text-primary" : "text-muted-foreground"}`} />
-                        {feature.feature}
+                        {feature}
                     </li>
                 ))}
             </ul>
