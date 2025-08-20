@@ -1,9 +1,8 @@
 "use client";
 
-
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSidebar } from "@/context/SidebarContext";
 import {
   HomeIcon,
@@ -17,16 +16,15 @@ import { useUser } from "@/context/UserContext";
 import { toast } from "react-toastify";
 
 const menuItems = [
-  { name: "Home", icon: HomeIcon, href: "/admin-dashboard?view=home" },
-  { name: "User Management", icon: ClipboardDocumentListIcon, href: "/admin-dashboard?view=users" },
-  { name: "Subscription plans", icon: CurrencyDollarIcon, href: "/admin-dashboard?view=subscription" }, // ✅ NEW
+  { name: "Home", icon: HomeIcon, href: "/admin-dashboard" },
+  { name: "User Management", icon: ClipboardDocumentListIcon, href: "/admin-dashboard/user-management" },
+  { name: "Subscription plans", icon: CurrencyDollarIcon, href: "/admin-dashboard/subscription-plans" },
 ];
 
 const Sidebar = () => {
   const { isOpen, toggleSidebar, setIsOpen } = useSidebar();
+  const { logout } = useUser();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { user, logout } = useUser();
 
   useEffect(() => {
     const handleResize = () => {
@@ -42,8 +40,6 @@ const Sidebar = () => {
     toast.info("Logging out...", { autoClose: 1000 });
     logout();
   };
-
-  const currentView = searchParams.get("view") || "home";
 
   return (
     <aside
@@ -70,11 +66,7 @@ const Sidebar = () => {
         {/* Menu */}
         <nav className="flex-1 px-3 py-4 space-y-1">
           {menuItems.map((item) => {
-            const isActive =
-              pathname === "/admin-dashboard" &&
-              ((item.name === "Home" && currentView === "home") ||
-                (item.name === "User Management" && currentView === "users") ||
-                (item.name === "Subscription plans" && currentView === "subscription")); // ✅
+            const isActive = pathname === item.href;
 
             return (
               <Link

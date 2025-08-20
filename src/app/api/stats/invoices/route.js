@@ -62,11 +62,8 @@ export async function GET(request) {
             }
         ]);
 
-        // Monthly invoice trends
+        // Monthly invoice trends - REMOVED the date filter that was causing empty results
         const monthlyTrends = await ExtractedInvoice.aggregate([
-            {
-                $match: { createdAt: { $gte: startDate } }
-            },
             {
                 $addFields: {
                     totalAmountNum: {
@@ -107,7 +104,15 @@ export async function GET(request) {
                         $concat: [
                             { $toString: "$_id.year" },
                             "-",
-                            { $toString: { $add: [100, "$_id.month"] } }
+                            { 
+                                $toString: { 
+                                    $cond: [
+                                        { $lt: ["$_id.month", 10] },
+                                        { $concat: ["0", { $toString: "$_id.month" }] },
+                                        { $toString: "$_id.month" }
+                                    ]
+                                }
+                            }
                         ]
                     },
                     count: 1,
@@ -251,7 +256,7 @@ export async function GET(request) {
                 },
                 trends: {
                     monthly: monthlyTrends.map(item => ({
-                        month: item.month.substring(0, 4) + "-" + item.month.substring(5),
+                        month: item.month,
                         count: item.count,
                         totalAmount: Math.round(item.totalAmount * 100) / 100,
                         totalVAT: Math.round(item.totalVAT * 100) / 100
