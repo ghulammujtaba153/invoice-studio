@@ -615,7 +615,7 @@ export default function InvoiceAnalytics(_: Props) {
       {/* -------------------------------- Users -------------------------------- */}
       <div>
         <h3 className="text-lg font-semibold mb-2">Users</h3>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Users Growth */}
           <Card className="p-5">
             <div className="mb-3 font-medium">Users Growth (period: {users?.summary?.period || "—"})</div>
@@ -674,7 +674,7 @@ export default function InvoiceAnalytics(_: Props) {
           </Card>
 
           {/* Status pie */}
-          <Card className="p-5">
+          {/* <Card className="p-5">
             <div className="mb-3 font-medium">Status</div>
             {!usersByStatus.length ? (
               <EmptyState label="No status breakdown yet." />
@@ -700,7 +700,7 @@ export default function InvoiceAnalytics(_: Props) {
                 </ResponsiveContainer>
               </div>
             )}
-          </Card>
+          </Card> */}
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import CreatePlanDialog from "@/components/admin/CreatePlanDialog";
-import { Pencil } from "lucide-react";
+import { Delete, Pencil } from "lucide-react";
 
 const SubscriptionPlans = () => {
   const [plans, setPlans] = useState([]);
@@ -36,7 +36,7 @@ const SubscriptionPlans = () => {
   const fetchPlans = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:9002/api/plans/get");
+      const res = await axios.get("/api/plans/get");
       if (Array.isArray(res.data)) {
         setPlans(res.data);
       } else {
@@ -62,7 +62,7 @@ const SubscriptionPlans = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:9002/api/plans/create",
+        "/api/plans/create",
         payload
       );
       if (res.data?.success) {
@@ -93,6 +93,24 @@ const SubscriptionPlans = () => {
   useEffect(() => {
     fetchPlans();
   }, []);
+
+
+
+  const handleDeletePlan = async (id: string) => {
+   toast.loading("Deleting plan...");
+
+    try {
+      const res = await axios.post(`/api/plans/delete`, { id });
+      
+        toast.success("Plan deleted successfully");
+        fetchPlans();
+        
+    } catch (error) {
+      toast.dismiss();
+      toast.error("API error");
+      console.error(error);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -127,6 +145,19 @@ const SubscriptionPlans = () => {
                 >
                   <Pencil className="w-4 h-4" /> Edit
                 </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto text-blue-500 hover:underline"
+                  onClick={() => handleDeletePlan(plan._id)}
+                >
+                  <Delete className="w-4 h-4" /> Delete
+                </Button>
+
+
+
+
                 <h3 className="text-xl font-bold text-primary">{plan.title}</h3>
                 <p className="text-sm text-muted-foreground">{plan.subtitle}</p>
               </div>

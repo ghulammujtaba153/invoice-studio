@@ -40,7 +40,7 @@ const Navbar = () => {
     <div className="sticky top-6 flex justify-between items-center bg-card text-foreground border border-border rounded-3xl p-4 w-full max-w-sm mx-auto z-10 shadow-sm">
       <Link href={"/"} className="text-foreground hover:text-primary transition-colors">Home</Link>
       <div className="flex items-center gap-4">
-        {user && <Link href="/dashboard" className="text-foreground hover:text-primary transition-colors">Dashboard</Link>}
+        {user && <Link href={user.role== "admin"? "admin-dashboard": "/dashboard"} className="text-foreground hover:text-primary transition-colors">Dashboard</Link>}
         
         {/* Theme Toggle */}
         <ThemeToggle />

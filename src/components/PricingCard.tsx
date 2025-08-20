@@ -1,155 +1,142 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import axios from "axios";
+import Link from "next/link";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { loadStripe } from "@stripe/stripe-js";
+import { usePackage } from "@/context/PackageContext";
+import { useUser } from "@/context/UserContext";
+import axios from "axios";
 
-const SubscriptionPlans = () => {
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    subtitle: "",
-    features: "",
-    price: "",
-    stripePriceId: "",
-    requests: "",
-  });
+interface Feature {
+  id: string;
+  feature: string;
+}
 
-  const fetchPlans = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get("http://localhost:9002/api/plans/get");
-      setPlans(res.data || []);
-    } catch (err) {
-      toast.error("Failed to fetch plans");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+interface Card {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  requests: number;
+  features: Feature[];
+}
 
-  const handleCreatePlan = async () => {
-    const payload = {
-      title: form.title,
-      subtitle: form.subtitle,
-      features: form.features.split(",").map((f) => f.trim()),
-      price: parseFloat(form.price),
-      stripePriceId: form.stripePriceId,
-      requests: parseInt(form.requests),
+interface PricingCardProps {
+  card: Card;
+  active: boolean;
+  onClick: () => void;
+  currentPlan?: boolean;
+}
+
+const PricingCard: React.FC<PricingCardProps> = ({ card, active, onClick, currentPlan = false }) => {
+    const { savePackage } = usePackage();
+    const { user } = useUser();
+    const [loading, setLoading] = useState(false);
+    console.log("price card user", user)
+    
+    
+    const handleCheckout = async () => {
+        console.log("checkout");
+        setLoading(true);
+
+        // const res = await axios.post("/api/packages/create", {
+        //   UserId: user?.userId || user?._id || "",
+        //   name: card.title,
+        //   price: card.price,
+        //   requests: card.requests,
+        // })
+        // console.log("res", res)
+    
+        const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
+    
+        if (!stripe) {
+          console.error("Failed to load Stripe");
+          setLoading(false);
+          return;
+        }
+    
+        const response = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            priceId: card.id,
+            packageDetails: {
+              UserId: user?.userId || user?._id || "",
+              name: card.title,
+              price: card.price,
+              requests: card.requests,
+            }
+          }),
+        });
+    
+        const session = await response.json();
+    
+        const result = await stripe.redirectToCheckout({ sessionId: session.id });
+        setLoading(false);
+    
+        if (result.error) {
+          console.error(result.error.message);
+        }
     };
 
-    try {
-      const res = await axios.post("http://localhost:9002/api/plans/create", payload);
-      if (res.data?.success) {
-        toast.success("Plan created successfully");
-        fetchPlans();
-        setOpen(false);
-        setForm({ title: "", subtitle: "", features: "", price: "", stripePriceId: "", requests: "" });
-      } else {
-        toast.error(res.data?.message || "Failed to create plan");
-      }
-    } catch (error) {
-      toast.error("API error during creation");
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    fetchPlans();
-  }, []);
-
-  return (
-    <div className="w-full">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Subscription Plans</h2>
-
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>Create New Plan</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create a Plan</DialogTitle>
-            </DialogHeader>
-
-            <div className="flex flex-col gap-4 py-4">
-              <Input placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="border" />
-              <Input placeholder="Subtitle" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} className="border" />
-              <Textarea placeholder="Comma-separated features (e.g. 100 requests,Email support)" value={form.features} onChange={(e) => setForm({ ...form, features: e.target.value })} className="border" />
-              <Input type="number" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="border" />
-              <Input placeholder="Stripe Price ID" value={form.stripePriceId} onChange={(e) => setForm({ ...form, stripePriceId: e.target.value })} className="border" />
-              <Input type="number" placeholder="Request Limit" value={form.requests} onChange={(e) => setForm({ ...form, requests: e.target.value })} className="border" />
+    
+      return (
+        <div 
+            onClick={onClick}
+            className={`flex flex-col gap-4 border ${
+                active 
+                    ? "border-primary shadow-lg shadow-primary/20" 
+                    : "border-border"
+            } bg-card backdrop-blur-[70px] rounded-[20px] p-4 transition-all duration-300 cursor-pointer hover:scale-[1.02]`}
+        >
+            <div className="flex flex-col gap-2">
+                <h1 className={`${active ? "text-primary" : "text-foreground"} text-2xl font-bold transition-colors`}>{card.title}</h1>
+                <p className="text-muted-foreground text-sm">{card.description}</p>
             </div>
-
-            <DialogFooter>
-              <Button onClick={handleCreatePlan}>Submit</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plans.map((card, index) => (
-            <div
-              key={card._id || index}
-              onClick={() => setActiveIndex(index)}
-              className={`flex flex-col gap-4 border ${
-                activeIndex === index ? "border-primary shadow-lg shadow-primary/20" : "border-border"
-              } bg-card backdrop-blur-[70px] rounded-[20px] p-4 transition-all duration-300 cursor-pointer hover:scale-[1.02]`}
-            >
-              <div className="flex flex-col gap-2">
-                <h1 className={`text-2xl font-bold ${activeIndex === index ? "text-primary" : "text-foreground"}`}>{card.title}</h1>
-                <p className="text-muted-foreground text-sm">{card.subtitle}</p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <p className="text-foreground text-4xl font-bold">
-                  {card.price === 0 ? "Free" : `$${card.price}`}
-                </p>
+            
+            <div className="flex items-center gap-2">
+                <p className="text-foreground text-4xl font-bold">{card.price === 0 ? "Free" : `$${card.price}`}</p>
                 <p className="text-muted-foreground text-sm"> One-Time Payment</p>
-              </div>
-
-              <div className="flex flex-col py-2 gap-2">
+            </div>
+            <div className="flex flex-col py-2 gap-2">
                 <p className="text-foreground text-sm">Features</p>
                 <div className="w-full h-[1px] bg-border"></div>
-              </div>
-
-              <ul className="list-disc list-inside text-muted-foreground text-lg">
-                {Array.isArray(card.features) &&
-                  card.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      <CheckCircleIcon
-                        className={`w-4 h-4 ${activeIndex === index ? "text-primary" : "text-muted-foreground"}`}
-                      />
-                      {typeof feature === "string" ? feature : feature.feature}
-                    </li>
-                  ))}
-              </ul>
             </div>
-          ))}
+            <ul className="list-disc list-inside text-muted-foreground text-lg">
+                {card.features.map((feature) => (
+                    <li key={feature.id} className="flex items-center gap-2">
+                        <CheckCircleIcon className={`w-4 h-4 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                        {feature.feature}
+                    </li>
+                ))}
+            </ul>
+            {card.title !== "Free" && <button 
+                onClick={handleCheckout}
+                disabled={loading} 
+                className={`text-foreground text-lg font-semibold my-4 cursor-pointer border border-border bg-card
+                backdrop-blur-[70px] rounded-lg items-center justify-center flex gap-2 p-2 transition-all hover:bg-gradient-to-r hover:from-primary hover:to-primary/80 hover:border-transparent disabled:cursor-not-allowed`}
+            >
+                 Buy now
+            </button>}
+
+            {/* {currentPlan && <button 
+                // onClick={handleCheckout} 
+                className={`text-foreground text-lg font-semibold my-4 border ${
+                    currentPlan 
+                        ? "bg-gradient-to-r from-primary to-primary/80 border-transparent" 
+                        : "border-border bg-card"
+                } backdrop-blur-[70px] rounded-lg items-center justify-center flex gap-2 p-2 transition-all hover:bg-gradient-to-r hover:from-primary hover:to-primary/80 hover:border-transparent`}
+            >
+                {
+                    currentPlan? "Current plan" : "Get Started"
+                }
+                
+            </button>} */}
+
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
-export default SubscriptionPlans;
-  
+export default PricingCard;
