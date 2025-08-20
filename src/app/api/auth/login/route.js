@@ -28,7 +28,7 @@ export async function POST(request) {
         userId: user._id,
         email: user.email,
         name: user.name,
-        role: ADMIN_EMAILS.includes(user.email) ? "admin" : "user" // ✅ inject role
+        role: user.role, // ✅ inject role
       },
       JWT_SECRET,
       { expiresIn: "1h" }

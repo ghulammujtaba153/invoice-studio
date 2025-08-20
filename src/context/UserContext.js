@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import { ADMIN_EMAILS } from "@/lib/constants";
+// import { ADMIN_EMAILS } from "@/lib/constants";
 
 const UserContext = createContext();
 
@@ -65,12 +65,12 @@ export const UserProvider = ({ children }) => {
     if (!user?.email) return;
 
     const normalizedEmail = user.email.trim().toLowerCase();
-    const isAdmin = ADMIN_EMAILS.includes(normalizedEmail);
+    const isAdmin = user.role== "admin";
 
     const currentPath = window.location.pathname;
-    if (isAdmin && currentPath !== "/admin-dashboard") {
+    if (user.role == "admin" && currentPath !== "/admin-dashboard") {
       router.push("/admin-dashboard");
-    } else if (!isAdmin && currentPath !== "/dashboard") {
+    } else if (user.role != "admin" && currentPath !== "/dashboard") {
       router.push("/dashboard");
     }
   }, [user]);

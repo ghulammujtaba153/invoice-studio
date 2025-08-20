@@ -9,7 +9,6 @@ import { PackageProvider } from "@/context/PackageContext";
 import Sidebar from "@/components/admin/Sidebar";
 import Header from "@/components/admin/Header";
 
-const ADMIN_EMAILS = ["ghulammujtaba.dro@gmail.com"]; // Add more admin emails as needed
 
 const LayoutContent = ({ children }: { children: React.ReactNode }) => {
   const { isOpen } = useSidebar();
@@ -17,15 +16,13 @@ const LayoutContent = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Client-side protection
-    if (!user || !ADMIN_EMAILS.includes(user.email)) {
+    
+    if (!user  || user.role !== "admin") {
       router.push("/not-authorized");
     }
   }, [user, router]);
 
-  if (!user || !ADMIN_EMAILS.includes(user.email)) {
-    return null; // Or a loading spinner
-  }
+  
 
   return (
     <div className="flex min-h-screen">
