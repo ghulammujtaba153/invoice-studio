@@ -46,6 +46,7 @@ export async function POST(request) {
 
     // Update the user's password
     user.password = hashedPassword;
+    user.status = "active"
     await user.save();
 
     return NextResponse.json({
