@@ -28,12 +28,12 @@ export async function POST(request) {
       );
     }
 
-    const { _id } = decoded;
+    const { userId } = decoded;
 
     await connectDB();
 
     // Find the user by ID
-    const user = await User.findById(_id);
+    const user = await User.findById(userId);
     if (!user) {
       return NextResponse.json(
         { success: false, message: 'User not found' },
