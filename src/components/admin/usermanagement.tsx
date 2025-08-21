@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Search, MoreVertical, Eye, Pencil, Trash2 } from "lucide-react";
+import { toast } from "react-toastify";
 
 // 👉 NEW: Create modal moved to its own file
 import CreateUserDialog from "@/components/admin/CreateUserDialog";
@@ -113,8 +114,9 @@ function ViewUserDialog({ user }: { user: BackendUser }) {
 }
 
 /* ------------------------------ Edit Dialog ------------------------------ */
-function EditUserDialog({ user, onSave }: { user: BackendUser; onSave: (u: BackendUser) => void }) {
+function EditUserDialog({ user, onSave }: { user: BackendUser; onSave: (u: BackendUser) => Promise<void> }) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: user.name || "",
     email: user.email || "",
@@ -123,12 +125,21 @@ function EditUserDialog({ user, onSave }: { user: BackendUser; onSave: (u: Backe
   });
   const [err, setErr] = useState<string | null>(null);
 
-  const submit = () => {
+  const submit = async () => {
     if (!form.name.trim()) return setErr("Name is required");
     if (!/[^@\s]+@[^@\s]+\.[^@\s]+/.test(form.email)) return setErr("Valid email is required");
+    
     setErr(null);
-    onSave({ ...user, ...form });
-    setOpen(false);
+    setLoading(true);
+    
+    try {
+      await onSave({ ...user, ...form });
+      setOpen(false);
+    } catch (error) {
+      console.error("Error saving user:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -147,11 +158,18 @@ function EditUserDialog({ user, onSave }: { user: BackendUser; onSave: (u: Backe
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Name</Label>
-            <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            <Input 
+              value={form.name} 
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} 
+            />
           </div>
           <div className="space-y-2">
             <Label>Email</Label>
-            <Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+            <Input 
+              type="email" 
+              value={form.email} 
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} 
+            />
           </div>
           <div className="space-y-2">
             <Label>Role</Label>
@@ -160,7 +178,6 @@ function EditUserDialog({ user, onSave }: { user: BackendUser; onSave: (u: Backe
               <SelectContent>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="user">User</SelectItem>
-                {/* optional extra roles for local-only editing */}
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="staff">Staff</SelectItem>
                 <SelectItem value="viewer">Viewer</SelectItem>
@@ -182,8 +199,12 @@ function EditUserDialog({ user, onSave }: { user: BackendUser; onSave: (u: Backe
 
         {err && <p className="text-sm text-red-500">{err}</p>}
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={submit}>Save Changes</Button>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            Cancel
+          </Button>
+          <Button onClick={submit} disabled={loading}>
+            {loading ? "Saving..." : "Save Changes"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -191,7 +212,7 @@ function EditUserDialog({ user, onSave }: { user: BackendUser; onSave: (u: Backe
 }
 
 /* ------------------------------ Delete Dialog ------------------------------ */
-function DeleteUserDialog({ onConfirm }: { onConfirm: () => void }) {
+function DeleteUserDialog({ user, onConfirm }: { user: BackendUser; onConfirm: (id: string) => void }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -202,11 +223,16 @@ function DeleteUserDialog({ onConfirm }: { onConfirm: () => void }) {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete user?</AlertDialogTitle>
-          <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the user{" "}
+            <span className="font-semibold">{user.name}</span> ({user.email}).
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={onConfirm}>Delete</AlertDialogAction>
+          <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => onConfirm(user._id)}>
+            Delete
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -214,7 +240,7 @@ function DeleteUserDialog({ onConfirm }: { onConfirm: () => void }) {
 }
 
 /* ------------------------------ Actions Menu ------------------------------ */
-function ActionsMenu({ user, onEdit, onDelete }: { user: BackendUser; onEdit: (u: BackendUser) => void; onDelete: (id: string) => void; }) {
+function ActionsMenu({ user, onEdit, onDelete }: { user: BackendUser; onEdit: (u: BackendUser) => Promise<void>; onDelete: (id: string) => void; }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -229,7 +255,7 @@ function ActionsMenu({ user, onEdit, onDelete }: { user: BackendUser; onEdit: (u
         <EditUserDialog user={user} onSave={onEdit} />
 
         <DropdownMenuSeparator />
-        <DeleteUserDialog onConfirm={() => onDelete(user._id)} />
+        <DeleteUserDialog user={user} onConfirm={onDelete} />
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -278,7 +304,7 @@ export default function UserManagement() {
       }
     })();
     return () => { mounted = false; };
-  }, [page, limit, reloadKey]); // <-- reloadKey added
+  }, [page, limit, reloadKey]);
 
   const tableRows = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -305,9 +331,83 @@ export default function UserManagement() {
     }
   };
 
-  // local-only edit/delete placeholders
-  const onEditLocal = (updated: BackendUser) => setRows((prev) => prev.map((u) => (u._id === updated._id ? updated : u)));
-  const onDeleteLocal = (id: string) => setRows((prev) => prev.filter((u) => u._id !== id));
+  // Handle user update with API call
+  const handleUserUpdate = async (updatedUser: BackendUser) => {
+    try {
+      const response = await fetch("/api/auth/update", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: updatedUser._id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          status: updatedUser.status,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update user");
+      }
+
+      if (result) {
+        // Update local state with the updated user
+        setRows((prev) => prev.map((user) => 
+          user._id === updatedUser._id ? { ...user, ...updatedUser } : user
+        ));
+        toast.success("User updated successfully");
+        return true;
+      } else {
+        throw new Error(result.message || "Failed to update user");
+      }
+    } catch (error: any) {
+      console.error("Error updating user:", error);
+      toast.error(error.message || "Failed to update user");
+      throw error;
+    }
+  };
+
+  // Handle user deletion with API call
+  const handleDeleteUser = async (id: string) => {
+    try {
+      const response = await fetch("/api/auth/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to delete user");
+      }
+
+      if (result.success) {
+        // Update local state to remove the deleted user
+        setRows((prev) => prev.filter((user) => user._id !== id));
+        toast.success("User deleted successfully");
+        
+        // If we're on the last page with only one user, go to previous page
+        if (pagination && rows.length === 1 && page > 1) {
+          setPage(page - 1);
+        }
+        
+        // Refresh the data to ensure we have the latest state
+        setReloadKey((prev) => prev + 1);
+      } else {
+        throw new Error(result.message || "Failed to delete user");
+      }
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      toast.error(error.message || "Failed to delete user");
+    }
+  };
 
   const SortIcon = (key: SortKey) => (
     <span className="inline-block w-3 text-muted-foreground">
@@ -316,7 +416,6 @@ export default function UserManagement() {
   );
 
   const p = pagination;
-  const pageInfo = `Page ${p?.currentPage ?? page} / ${p?.totalPages ?? 1}`;
   const totalUsers = p?.totalUsers ?? tableRows.length;
 
   return (
@@ -343,76 +442,79 @@ export default function UserManagement() {
             </SelectContent>
           </Select>
 
-          {/* 👉 Separate Create modal with API (invite) */}
           <CreateUserDialog
             onSuccess={() => {
-              setPage(1);               // go to first page
-              setReloadKey((k) => k + 1); // refetch
+              setPage(1);
+              setReloadKey((k) => k + 1);
             }}
           />
         </div>
       </div>
 
-      {/* Table */}
-      <ScrollArea className="w-full overflow-auto">
-        <Table>
-          <TableHeader className="sticky top-0 z-10 bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-            <TableRow>
-              <TableHead className="w-[80px]">User</TableHead>
-              <TableHead onClick={() => toggleSort("name")} className="cursor-pointer select-none">Name {SortIcon("name")}</TableHead>
-              <TableHead onClick={() => toggleSort("email")} className="cursor-pointer select-none">Email {SortIcon("email")}</TableHead>
-              <TableHead onClick={() => toggleSort("role")} className="cursor-pointer select-none">Role {SortIcon("role")}</TableHead>
-              <TableHead onClick={() => toggleSort("status")} className="cursor-pointer select-none">Status {SortIcon("status")}</TableHead>
-              <TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none">Created {SortIcon("createdAt")}</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">Loading…</TableCell>
-              </TableRow>
-            ) : err ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-red-500">Error: {err}</TableCell>
-              </TableRow>
-            ) : tableRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">No users found.</TableCell>
-              </TableRow>
-            ) : (
-              tableRows.map((u) => (
-                <TableRow key={u._id} className="hover:bg-muted/40">
-                  <TableCell>
-                    <Avatar className="h-9 w-9">
-                      {u.image ? <AvatarImage src={u.image} alt={u.name} /> : null}
-                      <AvatarFallback>{initials(u.name)}</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className="font-medium">{u.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                  <TableCell><Badge className={roleBadgeClass(u.role)}>{titleCase(u.role)}</Badge></TableCell>
-                  <TableCell><Badge className={statusBadgeClass(u.status)}>{titleCase(u.status)}</Badge></TableCell>
-                  <TableCell>{new Date(u.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">
-                    <ActionsMenu user={u} onEdit={onEditLocal} onDelete={onDeleteLocal} />
-                  </TableCell>
+      {/* Table Container with Horizontal Scrolling */}
+      <div className="rounded-md border overflow-hidden">
+        <ScrollArea className="w-full overflow-auto">
+          <div className="min-w-[800px]">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+                <TableRow>
+                  <TableHead className="w-[80px]">User</TableHead>
+                  <TableHead onClick={() => toggleSort("name")} className="cursor-pointer select-none">Name {SortIcon("name")}</TableHead>
+                  <TableHead onClick={() => toggleSort("email")} className="cursor-pointer select-none">Email {SortIcon("email")}</TableHead>
+                  <TableHead onClick={() => toggleSort("role")} className="cursor-pointer select-none">Role {SortIcon("role")}</TableHead>
+                  <TableHead onClick={() => toggleSort("status")} className="cursor-pointer select-none">Status {SortIcon("status")}</TableHead>
+                  <TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none">Created {SortIcon("createdAt")}</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
+              </TableHeader>
 
-          <TableCaption className="text-muted-foreground">Total users: {totalUsers}</TableCaption>
-        </Table>
-      </ScrollArea>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">Loading…</TableCell>
+                  </TableRow>
+                ) : err ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-red-500">Error: {err}</TableCell>
+                  </TableRow>
+                ) : tableRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">No users found.</TableCell>
+                  </TableRow>
+                ) : (
+                  tableRows.map((u) => (
+                    <TableRow key={u._id} className="hover:bg-muted/40">
+                      <TableCell>
+                        <Avatar className="h-9 w-9">
+                          {u.image ? <AvatarImage src={u.image} alt={u.name} /> : null}
+                          <AvatarFallback>{initials(u.name)}</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className="font-medium">{u.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                      <TableCell><Badge className={roleBadgeClass(u.role)}>{titleCase(u.role)}</Badge></TableCell>
+                      <TableCell><Badge className={statusBadgeClass(u.status)}>{titleCase(u.status)}</Badge></TableCell>
+                      <TableCell>{new Date(u.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <ActionsMenu user={u} onEdit={handleUserUpdate} onDelete={handleDeleteUser} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+
+              <TableCaption className="text-muted-foreground">Total users: {totalUsers}</TableCaption>
+            </Table>
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* Pagination (server-driven) */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="text-sm text-muted-foreground">
           Page {p?.currentPage ?? page} / {p?.totalPages ?? 1} • {p?.limit ?? limit} per page
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-center">
           <Button variant="outline" size="sm" onClick={() => setPage(1)} disabled={!p || p.currentPage <= 1}>First</Button>
           <Button variant="outline" size="sm" onClick={() => setPage((x) => Math.max(1, x - 1))} disabled={!p || !p.hasPrevPage}>Prev</Button>
           <div className="text-sm">Page {p?.currentPage ?? page}</div>

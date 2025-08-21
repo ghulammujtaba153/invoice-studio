@@ -105,7 +105,7 @@ const ResetPasswordContent = () => {
             disabled={loading}
             className="w-full py-3 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Resetting Password..." : "Reset Password"}
+            {loading ? "setting Password..." : "set Password"}
           </button>
         </div>
       </div>

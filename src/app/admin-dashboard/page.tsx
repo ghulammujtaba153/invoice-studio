@@ -10,7 +10,7 @@ import InvoiceAnalytics from "@/components/admin/invoice-analytics";
 
 export default function AdminDashboardPage() {
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col items-center">
       <InvoiceAnalytics/>
       
     </div>

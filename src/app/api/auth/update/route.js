@@ -7,7 +7,7 @@ export async function PATCH(request) {
   try {
     await connectDB();
 
-    const { userId, name, email, password } = await request.json();
+    const { userId, name, email, password, role, status } = await request.json();
 
     // Validate the input
     if (!userId) {
@@ -24,6 +24,14 @@ export async function PATCH(request) {
         { error: "User not found" },
         { status: 404 }
       );
+    }
+
+    if(role){
+      user.role = role;
+    }
+
+    if(status){
+      user.status= status
     }
 
     // Update user fields if provided
