@@ -16,10 +16,15 @@ const LayoutContent = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    
-    if (!user  || user.role !== "admin") {
+    if(user){
+      if (user?.role !== "admin") {
       router.push("/not-authorized");
     }
+    } else{
+      router.push("/signin")
+    }
+    
+    
   }, [user, router]);
 
   

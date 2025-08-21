@@ -15,6 +15,7 @@ export const savePackage = async (packageData: PackageData): Promise<void> => {
         if (pack) {
             pack.name = packageData.name;
             pack.requests += packageData.requests;
+            pack.price += packageData.price;
             await pack.save();
             console.log('Package updated successfully:', pack);
             return;
