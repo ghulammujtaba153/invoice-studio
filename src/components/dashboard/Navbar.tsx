@@ -16,20 +16,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Settings, CreditCard, SidebarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ActivityBar } from "./ActivityBar";
+import {ActivityBarContent} from "./ActivityBarContent";
 
 const Navbar = () => {
   const { user, logout } = useUser();
   const pathname = usePathname();
-
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 10); // trigger after small scroll
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   // Hide navbar on dashboard routes
   if (
@@ -49,21 +41,26 @@ const Navbar = () => {
 
   return (
     <div
-      className={`container sticky top-6 flex justify-between items-center transition-all duration-300 p-4 w-full mx-auto z-10 ${
-        scrolled
-          ? "bg-card border border-border rounded-2xl shadow-sm max-w-5xl"
-          : "bg-transparent border-none rounded-none shadow-none"
-      }`}
+      className={`container flex justify-between items-center transition-all duration-300 p-4 w-full mx-auto z-10 bg-transparent border-none rounded-none shadow-none`}
     >
-      <Button variant="ghost" className="rounded-full" size="sm">
-        <SidebarIcon />
-      </Button>
-      <Link
-        href={"/"}
-        className="text-foreground hover:text-primary transition-colors"
-      >
-        Home
-      </Link>
+      <div className="space-x-4">
+        <ActivityBar trigger={
+          <Button variant="outline" className="rounded-full w-10 h-10" size="icon">
+            <SidebarIcon />
+          </Button>}>
+           <ActivityBarContent
+            activityLog={[]}
+            onRenameEntry={()=>{}}
+            onOpenSettings={()=>{}}
+          />
+        </ActivityBar>
+        <Link
+          href={"/"}
+          className="text-foreground hover:text-primary transition-colors"
+        >
+          Home
+        </Link>
+      </div>
       <div className="flex items-center gap-4">
         {user && (
           <Link
