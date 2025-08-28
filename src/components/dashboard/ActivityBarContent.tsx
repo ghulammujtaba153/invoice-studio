@@ -1,48 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
-import type { ActivityLog } from "@/types/activity";
+import React, { useState, useEffect } from "react";
 import { SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  ListTree,
-  DownloadCloud,
-  Pencil,
-  Check,
-  X,
-  PanelLeft,
-  Settings as SettingsIcon,
-} from "lucide-react";
+import { ListTree, DownloadCloud, Pencil, Check, X, Settings as SettingsIcon } from "lucide-react";
 import { format } from "date-fns";
 import { saveAs } from "file-saver";
 import { cn } from "@/lib/utils";
+import { useActivityLog } from "@/context/ActivityLogContext";
 
-interface ActivityBarContentProps {
-  activityLog: ActivityLog;
-  onRenameEntry: (entryId: string, newLabel: string) => void;
-  onOpenSettings: () => void;
-  onClose?: () => void; // optional close fn
-}
-
-export function ActivityBarContent({
-  activityLog,
-  onRenameEntry,
-  onOpenSettings,
-  onClose,
-}: ActivityBarContentProps) {
+export function ActivityBarContent({ onClose }: { onClose?: () => void }) {
+  const { activityLog, renameEntry } = useActivityLog();
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editText, setEditText] = useState<string>("");
 
-  const handleStartEdit = (id: string, currentLabel: string) => {
-    setEditingEntryId(id);
-    setEditText(currentLabel);
-  };
-
-  const [isMobile, setIsMobile] = React.useState(false);
-  React.useEffect(() => {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 768px)");
     const updateMatch = () => setIsMobile(mediaQuery.matches);
     updateMatch();
@@ -52,7 +28,7 @@ export function ActivityBarContent({
 
   const handleSaveRename = (id: string) => {
     if (editText.trim()) {
-      onRenameEntry(id, editText.trim());
+      renameEntry(id, editText.trim());
     }
     setEditingEntryId(null);
     setEditText("");
@@ -69,57 +45,28 @@ export function ActivityBarContent({
         <SheetTitle>Activity Log</SheetTitle>
       </VisuallyHidden>
 
-      {/* Header */}
-      <div className="p-4 flex items-center justify-start gap-2 border-b">
+      <div className="p-4 border-b">
         <h2 className="text-lg font-semibold">Activity Log</h2>
       </div>
 
-      {/* Content */}
       <ScrollArea className="flex-1 px-2">
-        {activityLog.length === 0 && (
+        {activityLog.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
             No activity yet. Process invoices to log activity.
           </div>
-        )}
-        {activityLog.map((group) => (
-          <div key={group.date} className="mb-4">
-            <p className="px-2 mb-2 text-xs font-semibold text-muted-foreground">
-              {format(new Date(group.date + "T00:00:00Z"), "MMMM d, yyyy")}
-            </p>
-            <div className="space-y-1">
-              {group.entries.map((entry) => {
-                const handleDownload = () => {
-                  if (entry.excelFileDataUri) {
-                    const timestampStr = format(
-                      new Date(entry.timestamp),
-                      "yyyyMMdd_HHmmss"
-                    );
-                    const fileName = `invoice_snapshot_${timestampStr}.xlsx`;
-                    fetch(entry.excelFileDataUri)
-                      .then((res) => res.blob())
-                      .then((blob) => {
-                        if (blob.size > 0) {
-                          saveAs(blob, fileName);
-                        } else {
-                          console.warn("Empty Excel file in activity log.");
-                        }
-                      })
-                      .catch((err) =>
-                        console.error("Error downloading Excel:", err)
-                      );
-                  }
-                };
-
-                return (
-                  <div
-                    key={entry.id}
-                    className="flex items-center justify-between w-full group rounded-md px-2 py-1 hover:bg-accent"
-                  >
+        ) : (
+          activityLog.map((group) => (
+            <div key={group.date} className="mb-4">
+              <p className="px-2 mb-2 text-xs font-semibold text-muted-foreground">
+                {format(new Date(group.date + "T00:00:00Z"), "MMMM d, yyyy")}
+              </p>
+              <div className="space-y-1">
+                {group.entries.map((entry) => (
+                  <div key={entry.id} className="flex items-center justify-between group px-2 py-1 hover:bg-accent rounded-md">
                     {editingEntryId === entry.id ? (
                       <div className="flex-grow flex items-center gap-1.5">
-                        <ListTree className="h-4 w-4 mr-1 flex-shrink-0 text-muted-foreground" />
+                        <ListTree className="h-4 w-4 text-muted-foreground" />
                         <Input
-                          type="text"
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
                           onKeyDown={(e) => {
@@ -131,85 +78,43 @@ export function ActivityBarContent({
                         />
                       </div>
                     ) : (
-                      <button className="flex-grow text-left flex items-center text-sm">
-                        <ListTree className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span className="truncate">
-                          {entry.label} (
-                          {format(new Date(entry.timestamp), "p")})
-                        </span>
+                      <button className="flex-grow flex items-center text-sm text-left">
+                        <ListTree className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="truncate">{entry.label} ({format(new Date(entry.timestamp), "p")})</span>
                       </button>
                     )}
-
-                    <div className="flex items-center flex-shrink-0 ml-1.5 space-x-0.5">
+                    <div className="flex items-center ml-2 space-x-1">
                       {editingEntryId === entry.id ? (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleSaveRename(entry.id)}
-                            aria-label="Save rename"
-                            className="h-6 w-6 p-1 text-green-600 hover:bg-accent hover:text-green-500"
-                          >
+                          <Button size="icon" variant="ghost" onClick={() => handleSaveRename(entry.id)} className="h-6 w-6 p-1 text-green-600">
                             <Check className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleCancelEdit}
-                            aria-label="Cancel rename"
-                            className="h-6 w-6 p-1 text-red-600 hover:bg-accent hover:text-red-500"
-                          >
+                          <Button size="icon" variant="ghost" onClick={handleCancelEdit} className="h-6 w-6 p-1 text-red-600">
                             <X className="h-4 w-4" />
                           </Button>
                         </>
                       ) : (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              handleStartEdit(entry.id, entry.label)
-                            }
-                            aria-label="Edit activity label"
-                            className={cn(
-                              "h-6 w-6 p-1 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity",
-                              entry.excelFileDataUri ? "" : "mr-[28px]"
-                            )}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          {entry.excelFileDataUri && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={handleDownload}
-                              aria-label="Download Excel snapshot"
-                              className="h-6 w-6 p-1 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                            >
-                              <DownloadCloud className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </>
+                        <Button size="icon" variant="ghost" onClick={() => { setEditingEntryId(entry.id); setEditText(entry.label); }} className="h-6 w-6 p-1 text-muted-foreground opacity-0 group-hover:opacity-100">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      {entry.excelFileDataUri && (
+                        <Button size="icon" variant="ghost" onClick={() => saveAs(entry.excelFileDataUri!, `invoice_snapshot.xlsx`)} className="h-6 w-6 p-1 text-muted-foreground opacity-0 group-hover:opacity-100">
+                          <DownloadCloud className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="p-3 border-t flex items-center justify-between">
+      <div className="p-3 border-t flex justify-between items-center">
         <p className="text-xs text-muted-foreground">User activity history</p>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onOpenSettings}
-          className="hover:bg-accent"
-          aria-label="Open Settings"
-        >
+        <Button size="icon" variant="ghost" className="hover:bg-accent">
           <SettingsIcon className="h-5 w-5" />
         </Button>
       </div>
