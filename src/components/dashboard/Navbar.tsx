@@ -3,7 +3,7 @@
 import { useUser } from "@/context/UserContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -14,17 +14,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Settings, CreditCard } from "lucide-react";
+import { LogOut, User, Settings, CreditCard, SidebarIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
   const { user, logout } = useUser();
   const pathname = usePathname();
 
+  const [scrolled, setScrolled] = useState(false);
 
-  
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 10); // trigger after small scroll
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Hide navbar on dashboard routes
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin-dashboard") ) {
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin-dashboard")
+  ) {
     return null;
   }
 
@@ -37,14 +48,35 @@ const Navbar = () => {
   };
 
   return (
-    <div className="sticky top-6 flex justify-between items-center bg-card text-foreground border border-border rounded-3xl p-4 w-full max-w-sm mx-auto z-10 shadow-sm">
-      <Link href={"/"} className="text-foreground hover:text-primary transition-colors">Home</Link>
+    <div
+      className={`container sticky top-6 flex justify-between items-center transition-all duration-300 p-4 w-full mx-auto z-10 ${
+        scrolled
+          ? "bg-card border border-border rounded-2xl shadow-sm max-w-5xl"
+          : "bg-transparent border-none rounded-none shadow-none"
+      }`}
+    >
+      <Button variant="ghost" className="rounded-full" size="sm">
+        <SidebarIcon />
+      </Button>
+      <Link
+        href={"/"}
+        className="text-foreground hover:text-primary transition-colors"
+      >
+        Home
+      </Link>
       <div className="flex items-center gap-4">
-        {user && <Link href={user.role== "admin"? "admin-dashboard": "/dashboard"} className="text-foreground hover:text-primary transition-colors">Dashboard</Link>}
-        
+        {user && (
+          <Link
+            href={user.role == "admin" ? "admin-dashboard" : "/dashboard"}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Dashboard
+          </Link>
+        )}
+
         {/* Theme Toggle */}
         <ThemeToggle />
-        
+
         {/* User Dropdown Menu */}
         {user && (
           <DropdownMenu>
@@ -56,16 +88,20 @@ const Navbar = () => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.name || "User"}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email || "user@example.com"}
                   </p>
                 </div>
               </DropdownMenuLabel>
-              
-              
+
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-red-600 focus:text-red-600"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -76,7 +112,9 @@ const Navbar = () => {
         {!user && (
           <>
             {/*<Link href="/signup" className="text-foreground hover:text-primary transition-colors">Signup</Link> */}
-            <Link href="/signin" className="text-foreground hover:text-primary transition-colors">Signin</Link>
+            <Link href="/signin">
+              <Button>Sign In</Button>
+            </Link>
           </>
         )}
       </div>
