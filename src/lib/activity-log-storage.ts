@@ -116,6 +116,9 @@ export const clearActivityLogFromLocalStorage = (): void => {
 
   try {
     localStorage.removeItem(ACTIVITY_LOG_STORAGE_KEY);
+    window.dispatchEvent(
+      new CustomEvent("activityLogUpdated", { detail: { activityLog: null } })
+    )
     console.log('Cleared activity log from localStorage');
   } catch (error) {
     console.error('Failed to clear activity log from localStorage:', error);
@@ -271,7 +274,6 @@ export const renameActivityLogEntry = (id: string, newLabel: string): void => {
       localStorage.setItem(ACTIVITY_LOG_STORAGE_KEY, JSON.stringify(updatedLog));
       console.log(`Renamed activity log entry ${id} → "${newLabel}"`);
 
-      // 🔔 Dispatch event so UI updates
       window.dispatchEvent(
         new CustomEvent("activityLogUpdated", { detail: { activityLog: updatedLog } })
       );

@@ -857,7 +857,7 @@ export default function InvoiceInsightsPage() {
 
   if (!clientMounted) {
     return (
-      <div className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background">
+      <div className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col items-center justify-center">
         <ScanText className="h-16 w-16 text-primary animate-pulse" />
         <p className="text-muted-foreground mt-4 text-xl">Loading Invoice Insights...</p>
       </div>
