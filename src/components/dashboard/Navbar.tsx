@@ -18,7 +18,6 @@ import { LogOut, User, Settings, CreditCard, SidebarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActivityBar } from "./ActivityBar";
 import {ActivityBarContent} from "./ActivityBarContent";
-import { ActivityLogProvider } from "@/context/ActivityLogContext";
 
 const Navbar = () => {
   const { user, logout } = useUser();
@@ -45,14 +44,12 @@ const Navbar = () => {
       className={`container flex justify-between items-center transition-all duration-300 p-4 w-full mx-auto z-10 bg-transparent border-none rounded-none shadow-none`}
     >
       <div className="space-x-4">
-        <ActivityLogProvider>
           <ActivityBar trigger={
               <Button variant="outline" className="rounded-full w-10 h-10" size="icon">
                 <SidebarIcon />
               </Button>}>
             <ActivityBarContent />
           </ActivityBar>
-        </ActivityLogProvider>
         <Link
           href={"/"}
           className="text-foreground hover:text-primary transition-colors"

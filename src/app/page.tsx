@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
@@ -23,8 +22,8 @@ import { usePackage } from '@/context/PackageContext';
 import Notification from '@/components/dashboard/Notification';
 import * as requestLimiter from '@/lib/request-limiter';
 import { useSession } from 'next-auth/react';
-
-
+import { useLocalStorageInvoices } from '@/hooks/use-local-storage-invoices';
+import { useActivityLogStorage } from '@/hooks/use-activity-log-storage';
 
 export type InvoiceType = 'purchase' | 'sales';
 
@@ -34,7 +33,6 @@ interface SortConfig {
   column: SortableColumnKey | null;
   direction: 'ascending' | 'descending';
 }
-
 
 const fileToDataUri = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -190,29 +188,108 @@ function PageContent() {
   const { open, isMobile, openMobile } = useSidebar();
   const isSidebarActuallyOpen = isMobile ? openMobile : open;
 
+  const {
+    loadStoredInvoices,
+    saveInvoices: saveToLocalStorage,
+    clearStoredInvoices,
+    getStorageInfo,
+    isStorageAvailable
+  } = useLocalStorageInvoices();
+
+  // Add activity log storage hook
+  const {
+    loadStoredActivityLog,
+    saveActivityLog: saveActivityLogToStorage,
+    clearStoredActivityLog,
+    getStorageInfo: getActivityStorageInfo,
+    isStorageAvailable: isActivityStorageAvailable
+  } = useActivityLogStorage();
+
+  // Load activity log from localStorage on mount
+  useEffect(() => {
+    if (!user && isActivityStorageAvailable) {
+      const storedActivityLog = loadStoredActivityLog();
+      if (storedActivityLog.length > 0) {
+        setActivityLog(storedActivityLog);
+        const activityInfo = getActivityStorageInfo();
+        console.log(`Loaded ${activityInfo.totalEntries} activity entries from localStorage`);
+      }
+    }
+  }, [user, isActivityStorageAvailable, loadStoredActivityLog, getActivityStorageInfo]);
+
+  // Save activity log to localStorage whenever it changes (for non-logged-in users)
+  useEffect(() => {
+    if (!user && isActivityStorageAvailable && activityLog.length > 0) {
+      try {
+        saveActivityLogToStorage(activityLog);
+        const activityInfo = getActivityStorageInfo();
+        console.log(`Saved activity log: ${activityInfo.totalEntries} entries, ${activityInfo.sizeKB}KB`);
+      } catch (error) {
+        console.error('Failed to save activity log to localStorage:', error);
+      }
+    }
+  }, [activityLog, user, isActivityStorageAvailable, saveActivityLogToStorage, getActivityStorageInfo]);
+
   // Fetch user's existing invoices when user is present
   useEffect(() => {
-    const loadUserInvoices = async () => {
+    const loadInvoices = async () => {
+      let allInvoices: ProcessedInvoice[] = [];
+
+      // Load from database if user is logged in
       if (user?.userId || user?._id) {
         const userId = user.userId || user._id;
         const userInvoices = await fetchUserInvoices(userId);
+        allInvoices = [...userInvoices];
+        
         if (userInvoices.length > 0) {
-          setInvoices(prevInvoices => {
-            // Filter out any existing database invoices to avoid duplicates
-            const nonDbInvoices = prevInvoices.filter(inv => !inv.id.startsWith('db_'));
-            return [...userInvoices, ...nonDbInvoices];
-          });
           toast({
-            title: "Invoices Loaded",
-            description: `Loaded ${userInvoices.length} existing invoice(s) from your account.`,
+            title: "Database Invoices Loaded",
+            description: `Loaded ${userInvoices.length} invoice(s) from your account.`,
+          });
+        }
+      } 
+      // Load from localStorage if user is not logged in
+      else if (isStorageAvailable) {
+        const localInvoices = loadStoredInvoices();
+        allInvoices = [...localInvoices];
+        
+        if (localInvoices.length > 0) {
+          const storageInfo = getStorageInfo();
+          toast({
+            title: "Local Invoices Loaded",
+            description: `Loaded ${localInvoices.length} locally saved invoice(s) (${storageInfo.sizeKB}KB).`,
           });
         }
       }
+
+      if (allInvoices.length > 0) {
+        setInvoices(prevInvoices => {
+          // Filter out any existing saved invoices to avoid duplicates
+          const newInvoices = prevInvoices.filter(inv => 
+            !inv.id.startsWith('db_') && !inv.id.startsWith('local_')
+          );
+          return [...allInvoices, ...newInvoices];
+        });
+      }
     };
 
-    loadUserInvoices();
-  }, [user?.userId, user?._id, toast]);
+    loadInvoices();
+  }, [user?.userId, user?._id, toast, loadStoredInvoices, isStorageAvailable, getStorageInfo]);
 
+  useEffect(() => {
+    // Only save to localStorage if user is not logged in and we have completed invoices
+    if (!user && isStorageAvailable) {
+      const completedInvoicesOnly = invoices.filter(inv => 
+        inv.status === 'completed' && 
+        inv.extractedData && 
+        !inv.id.startsWith('local_') // Don't re-save already local invoices
+      );
+      
+      if (completedInvoicesOnly.length > 0) {
+        saveToLocalStorage(invoices);
+      }
+    }
+  }, [invoices, user, isStorageAvailable, saveToLocalStorage]);
 
   const logActivity = useCallback((label: string, excelFileDataUri?: string) => {
     const newEntry: ActivityEntry = {
@@ -235,6 +312,8 @@ function PageContent() {
         return [newGroup, ...prevLog];
       }
     });
+
+    console.log(`Activity logged: ${label}`);
   }, []);
 
   const handleRenameActivityEntry = useCallback((entryId: string, newLabel: string) => {
@@ -251,7 +330,6 @@ function PageContent() {
       description: `Entry updated to "${newLabel}".`,
     });
   }, [toast]);
-
 
   const handleFilesAccepted = useCallback(async (files: File[]) => {
     const newInvoices: ProcessedInvoice[] = files.map(file => ({
@@ -270,25 +348,11 @@ function PageContent() {
         title: "Files Added",
         description: `${newInvoices.length} file(s) added to the queue. Press "Process Invoices" to start.`,
       });
+
     }
   }, [toast]);
 
   const handleProcessInvoices = useCallback(async () => {
-
-
-
-
-    // Add request limit check at the start
-    // if (!user && !requestLimiter.canProcessRequest(false)) {
-    //   toast({
-    //     title: "Request Limit Reached",
-    //     description: "You've used your 3 free requests. Please register to get 5 more requests.",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
-
-
     const invoicesToProcess = invoices.filter(inv => inv.status === 'pending');
     if (invoicesToProcess.length === 0 && !invoices.some(inv => inv.status === 'processing')) {
       toast({
@@ -307,7 +371,6 @@ function PageContent() {
       return;
     }
 
-
     if (!await requestLimiter.canProcessRequest(user)) {
       if (!user) {
         toast({
@@ -317,7 +380,6 @@ function PageContent() {
         });
         setRequestError("You've used your 5 free requests. Please register to get 10 more requests.");
         return;
-
       } else {
         toast({
           title: "Request Limit Reached",
@@ -327,14 +389,14 @@ function PageContent() {
         setRequestError("You've used your credits Buy more!");
         return;
       }
-
     }
 
-    // ✅ Record the request only once
+    // Record the request
     requestLimiter.recordRequest(user);
 
-
-
+    // Log start of processing activity
+    const processingStartTime = Date.now();
+    
 
     setIsProcessing(true);
     setProcessingProgress(0);
@@ -343,6 +405,7 @@ function PageContent() {
     const totalFilesToProcess = invoicesToProcess.length;
     let newlyExtractedCountThisBatch = 0;
     let successfulApiCalls = 0;
+    let failedProcessing = 0;
 
     const existingSignatures = new Set<string>(
       invoices
@@ -381,7 +444,6 @@ function PageContent() {
         const invoiceDataUri = await fileToDataUri(processedOriginalFileEntry.file);
         const extractedResults: SingleInvoiceExtractOutput[] = await extractInvoiceData({ invoiceDataUri, invoiceType });
 
-
         if (extractedResults && extractedResults.length > 0) {
           for (let index = 0; index < extractedResults.length; index++) {
             const singleInvoiceData = extractedResults[index];
@@ -402,8 +464,6 @@ function PageContent() {
             if (!existingSignatures.has(signature)) {
               existingSignatures.add(signature);
 
-
-
               newUniqueEntriesForThisFile.push({
                 id: `${processedOriginalFileEntry.id}_inv${index + 1}`,
                 file: processedOriginalFileEntry.file,
@@ -412,7 +472,7 @@ function PageContent() {
                 fileType: processedOriginalFileEntry.fileType,
                 status: 'completed',
                 extractedData: singleInvoiceData,
-                processingOrderIndex: globalProcessingOrderIndex++, // Assign and increment
+                processingOrderIndex: globalProcessingOrderIndex++,
               });
               newlyExtractedCountThisBatch++;
             } else {
@@ -435,29 +495,36 @@ function PageContent() {
             processedOriginalFileEntry.status = 'completed';
             processedOriginalFileEntry.errorMessage = `No invoices found in ${processedOriginalFileEntry.fileName}.`;
             delete processedOriginalFileEntry.extractedData;
+            failedProcessing++;
           }
+
+          // Log successful processing for each file
+          // if (newUniqueEntriesForThisFile.length > 0) {
+          //   logActivity(`✓ Processed ${processedOriginalFileEntry.fileName}: ${newUniqueEntriesForThisFile.length} invoice${newUniqueEntriesForThisFile.length > 1 ? 's' : ''} extracted`);
+          // }
 
         } else {
           processedOriginalFileEntry.status = 'completed';
           processedOriginalFileEntry.errorMessage = `No invoices found by AI in ${processedOriginalFileEntry.fileName}.`;
           delete processedOriginalFileEntry.extractedData;
+          failedProcessing++;
+          
         }
       } catch (error: any) {
-        // Simplified error logging
         let errorMessage = "Unknown error in extractInvoiceDataFlow";
         if (error instanceof Error) {
           errorMessage = error.message;
         } else if (typeof error === 'string') {
           errorMessage = error;
         }
-        const inputHint = `invoiceType: ${invoiceType}, fileNameHint (first 50 chars): ${processedOriginalFileEntry?.file?.name?.substring(0, 50) + "..."}`;
-        console.error(`Error processing file: "${processedOriginalFileEntry.fileName}" ${errorMessage}. Input hint: ${inputHint}`);
-        if (error instanceof Error && error.stack) {
-          console.error("Stack trace:", error.stack);
-        }
-
+        
+        console.error(`Error processing file: "${processedOriginalFileEntry.fileName}" ${errorMessage}`);
+        
         processedOriginalFileEntry.status = 'error';
         processedOriginalFileEntry.errorMessage = error.message || "Unknown error during extraction";
+        failedProcessing++;
+        
+        
         toast({
           title: "Extraction Error",
           description: `Failed to process ${processedOriginalFileEntry.fileName}: ${processedOriginalFileEntry.errorMessage}`,
@@ -500,37 +567,54 @@ function PageContent() {
         inv => inv.status === 'completed' && inv.extractedData
       ).length;
 
+      // Save to localStorage for non-logged-in users
+      if (!user && isStorageAvailable && newlyExtractedCountThisBatch > 0) {
+        try {
+          saveToLocalStorage(tempInvoicesAccumulator);
+          const storageInfo = getStorageInfo();
+          console.log(`Saved invoices to localStorage: ${storageInfo.count} invoices, ${storageInfo.sizeKB}KB`);
+        } catch (error) {
+          console.error('Failed to save to localStorage:', error);
+        }
+      }
+
+      // Enhanced toast message
+      const storageMessage = user 
+        ? (successfulApiCalls > 0 ? `${successfulApiCalls} saved to database.` : '')
+        : (isStorageAvailable ? 'Saved locally.' : 'Note: Local storage not available.');
+
       toast({
         title: "Processing Complete",
-        description: `Processed ${totalFilesToProcess} file(s). ${newlyExtractedCountThisBatch} new unique invoice(s) extracted. ${successfulApiCalls > 0 ? `${successfulApiCalls} saved to database.` : ''} Total in table: ${totalInvoicesInTable}.`,
+        description: `Processed ${totalFilesToProcess} file(s). ${newlyExtractedCountThisBatch} new unique invoice(s) extracted. ${storageMessage} Total in table: ${totalInvoicesInTable}.`,
       });
 
+      // Log completion activity with detailed statistics
+      const processingEndTime = Date.now();
+      const processingDurationMinutes = Math.round((processingEndTime - processingStartTime) / 60000 * 10) / 10; // Round to 1 decimal
+      const successfulFiles = totalFilesToProcess - failedProcessing;
+      
       let excelDataUriForLog: string | undefined = undefined;
       if (allCompletedInvoicesForSnapshot.length > 0) {
         try {
           const excelBlob = generateExcelBlob(allCompletedInvoicesForSnapshot);
           if (excelBlob.size > 0) {
             excelDataUriForLog = await blobToDataUri(excelBlob);
-          } else {
-            console.warn("Generated Excel blob for activity log is empty.");
           }
         } catch (error) {
           console.error("Error generating Excel for activity log:", error);
-          toast({
-            title: "Activity Log Error",
-            description: "Could not generate Excel snapshot for activity log.",
-            variant: "destructive"
-          });
         }
       }
 
-      logActivity("View List", excelDataUriForLog);
+      logActivity(
+        `${newlyExtractedCountThisBatch} invoices extracted`,
+        excelDataUriForLog
+      );
     }
+
     // Merge with existing database invoices
     const existingDbInvoices = invoices.filter(inv => inv.id.startsWith('db_'));
-    setInvoices([...existingDbInvoices, ...tempInvoicesAccumulator]); // Final update after all processing and logging
-  }, [invoices, toast, isProcessing, logActivity, invoiceType, user, updatePackageRequests]);
-
+    setInvoices([...existingDbInvoices, ...tempInvoicesAccumulator]);
+  }, [invoices, toast, isProcessing, logActivity, invoiceType, user, updatePackageRequests, isStorageAvailable, saveToLocalStorage, getStorageInfo]);
 
   const handleSort = (column: SortableColumnKey | null) => {
     if (!column) return;
@@ -587,21 +671,24 @@ function PageContent() {
       return sorted;
     }
 
-    // Default sort by processingOrderIndex ascending, with database invoices first
+    // Default sort by processingOrderIndex ascending, with database and local invoices first
     return [...filtered].sort((a, b) => {
-      // Database invoices come first
       const aIsDb = a.id.startsWith('db_');
       const bIsDb = b.id.startsWith('db_');
+      const aIsLocal = a.id.startsWith('local_');
+      const bIsLocal = b.id.startsWith('local_');
 
+      // Priority: database > localStorage > new uploads
       if (aIsDb && !bIsDb) return -1;
       if (!aIsDb && bIsDb) return 1;
+      if (aIsLocal && !bIsLocal && !bIsDb) return -1;
+      if (!aIsLocal && bIsLocal && !aIsDb) return 1;
 
       // Then sort by processingOrderIndex
       if (a.processingOrderIndex === undefined || b.processingOrderIndex === undefined) return 0;
       return (a.processingOrderIndex ?? 0) - (b.processingOrderIndex ?? 0);
     });
   }, [invoices, sortConfig]);
-
 
   const handleExport = () => {
     if (completedInvoices.length === 0) {
@@ -612,23 +699,46 @@ function PageContent() {
       });
       return;
     }
+    
     exportToExcel(completedInvoices, `invoice_insights_export_${new Date().toISOString().split('T')[0]}.xlsx`);
     toast({
       title: "Export Successful",
       description: "Invoice data has been exported to Excel.",
     });
+    
+  
   };
 
   const handleClearAll = () => {
-    // Only clear non-database invoices (keep user's saved invoices)
-    const dbInvoices = invoices.filter(inv => inv.id.startsWith('db_'));
-    setInvoices(dbInvoices);
+    if (user) {
+      // Only clear non-database invoices (keep user's saved invoices)
+      const dbInvoices = invoices.filter(inv => inv.id.startsWith('db_'));
+      setInvoices(dbInvoices);
+    } else {
+      // For non-logged-in users, clear localStorage and all invoices
+      if (isStorageAvailable) {
+        clearStoredInvoices();
+      }
+      if (isActivityStorageAvailable) {
+        clearStoredActivityLog();
+        setActivityLog([]);
+      }
+      setInvoices([]);
+    }
+    
     setProcessingProgress(0);
     setIsProcessing(false);
+    
+    const description = user 
+      ? "All uploaded invoice data has been cleared. Your saved invoices remain."
+      : "All invoice data and activity history have been cleared from local storage.";
+    
     toast({
       title: "Cleared",
-      description: "All uploaded invoice data has been cleared. Your saved invoices remain.",
+      description,
     });
+    
+    
   };
 
   const pendingInvoicesCount = useMemo(() => invoices.filter(inv => inv.status === 'pending').length, [invoices]);
@@ -637,9 +747,6 @@ function PageContent() {
 
   return (
     <>
-
-
-
       <ActivitySidebarContent
         activityLog={activityLog}
         onRenameEntry={handleRenameActivityEntry}
@@ -648,12 +755,9 @@ function PageContent() {
       <SettingsPanel isOpen={isSettingsPanelOpen} onOpenChange={setIsSettingsPanelOpen} />
       <SidebarInset>
         <div className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col relative">
-
-
           <div className="absolute top-6 right-6 z-20">
             {/* <ThemeToggle /> */}
           </div>
-
 
           <header className="mb-10 text-center pt-16">
             <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary-foreground/90 pb-2">
@@ -737,11 +841,9 @@ function PageContent() {
   );
 }
 
-
-
 export default function InvoiceInsightsPage() {
   const [clientMounted, setClientMounted] = useState(false);
-  const { data: session } = useSession();  // <-- Call this unconditionally
+  const { data: session } = useSession();
 
   useEffect(() => {
     setClientMounted(true);
@@ -768,5 +870,3 @@ export default function InvoiceInsightsPage() {
     </SidebarProvider>
   );
 }
-
-

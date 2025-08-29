@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,14 @@ import { ListTree, DownloadCloud, Pencil, Check, X, Settings as SettingsIcon } f
 import { format } from "date-fns";
 import { saveAs } from "file-saver";
 import { cn } from "@/lib/utils";
-import { useActivityLog } from "@/context/ActivityLogContext";
+import { useActivityLogStorage } from '@/hooks/use-activity-log-storage';
+import { ActivityLog } from "@/types/activity";
 
 export function ActivityBarContent({ onClose }: { onClose?: () => void }) {
-  const { activityLog, renameEntry } = useActivityLog();
+  const {loadStoredActivityLog, renameActivityLogEntry } = useActivityLogStorage();
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editText, setEditText] = useState<string>("");
+  const [activityLog, setActivityLog] = useState<ActivityLog | null>(null)
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -26,9 +28,32 @@ export function ActivityBarContent({ onClose }: { onClose?: () => void }) {
     return () => mediaQuery.removeEventListener("change", updateMatch);
   }, []);
 
+   useEffect(() => {
+    const fetchLog = async () => {
+      const storedLog = await loadStoredActivityLog();
+      if (storedLog) setActivityLog(storedLog);
+    };
+    fetchLog();
+
+    const handler = async (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.activityLog) {
+        setActivityLog(customEvent.detail.activityLog);
+      } else {
+        const storedLog = await loadStoredActivityLog();
+        if (storedLog) setActivityLog(storedLog);
+      }
+    };
+
+    window.addEventListener("activityLogUpdated", handler);
+    return () => window.removeEventListener("activityLogUpdated", handler);
+  }, [loadStoredActivityLog]);
+
+
+
   const handleSaveRename = (id: string) => {
     if (editText.trim()) {
-      renameEntry(id, editText.trim());
+      renameActivityLogEntry(id,editText.trim());
     }
     setEditingEntryId(null);
     setEditText("");
@@ -43,6 +68,7 @@ export function ActivityBarContent({ onClose }: { onClose?: () => void }) {
     <SheetContent side={isMobile ? "bottom" : "left"} className={`${isMobile ? "h-[80vh]" : "w-80"} p-0 flex flex-col`}>
       <VisuallyHidden>
         <SheetTitle>Activity Log</SheetTitle>
+        <SheetDescription>View your activity logs</SheetDescription>
       </VisuallyHidden>
 
       <div className="p-4 border-b">
@@ -50,22 +76,22 @@ export function ActivityBarContent({ onClose }: { onClose?: () => void }) {
       </div>
 
       <ScrollArea className="flex-1 px-2">
-        {activityLog.length === 0 ? (
+        {activityLog?.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
             No activity yet. Process invoices to log activity.
           </div>
         ) : (
-          activityLog.map((group) => (
+          activityLog?.map((group) => (
             <div key={group.date} className="mb-4">
               <p className="px-2 mb-2 text-xs font-semibold text-muted-foreground">
                 {format(new Date(group.date + "T00:00:00Z"), "MMMM d, yyyy")}
               </p>
               <div className="space-y-1">
                 {group.entries.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between group px-2 py-1 hover:bg-accent rounded-md">
+                  <div key={entry.id} className="flex items-center justify-between group px-2 py-1 hover:bg-muted rounded-md w-full">
                     {editingEntryId === entry.id ? (
                       <div className="flex-grow flex items-center gap-1.5">
-                        <ListTree className="h-4 w-4 text-muted-foreground" />
+                        <ListTree className="!h-4 !w-4 text-muted-foreground" />
                         <Input
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
@@ -79,8 +105,8 @@ export function ActivityBarContent({ onClose }: { onClose?: () => void }) {
                       </div>
                     ) : (
                       <button className="flex-grow flex items-center text-sm text-left">
-                        <ListTree className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="truncate">{entry.label} ({format(new Date(entry.timestamp), "p")})</span>
+                        <ListTree className="!h-4 !w-4 mr-2 text-muted-foreground" />
+                        <span className="w-52 truncate">{entry.label} ({format(new Date(entry.timestamp), "p")})</span>
                       </button>
                     )}
                     <div className="flex items-center ml-2 space-x-1">
@@ -111,13 +137,6 @@ export function ActivityBarContent({ onClose }: { onClose?: () => void }) {
           ))
         )}
       </ScrollArea>
-
-      <div className="p-3 border-t flex justify-between items-center">
-        <p className="text-xs text-muted-foreground">User activity history</p>
-        <Button size="icon" variant="ghost" className="hover:bg-accent">
-          <SettingsIcon className="h-5 w-5" />
-        </Button>
-      </div>
     </SheetContent>
   );
 }
